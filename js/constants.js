@@ -6,7 +6,8 @@
 window.STORAGE_KEYS = {
   ALARMS: 'alarms',
   TIMERS: 'timers',
-  THEME: 'theme'
+  THEME: 'theme',
+  CLOCK_FORMAT: 'clockFormat'
 };
 
 // UI Constants
@@ -40,7 +41,7 @@ window.ANIMATION_INTERVALS = {
   RESOURCE_MONITOR: 1200,
   ACTIVITY_LOG: 2000,
   TIME_UPDATE: 1000,
-  MATRIX_RAIN: 200
+  MATRIX_RAIN: 120
 };
 
 // ASCII art dimensions

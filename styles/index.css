@@ -60,6 +60,8 @@ body {
   width: 500px;
   height: auto;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 body::before {
@@ -90,6 +92,9 @@ body::before {
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .terminal-container::before {
@@ -119,14 +124,7 @@ body::before {
   100% { opacity: 1; }
 }
 
-.terminal-container {
-  position: static;
-  max-width: 500px;
-  width: 100vw;
-  min-height: 100vh;
-  box-sizing: border-box;
-  height: auto;
-}
+
 
 .scan-line {
   position: absolute;
@@ -447,10 +445,18 @@ body::before {
   50% { opacity: 0.7; }
 }
 
+.main-screen,
+.settings-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .main-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
+  flex: 0 1 auto;
 }
 
 .section {
@@ -642,19 +648,67 @@ body::before {
 }
 
 .footer {
-  margin-top: 24px;
+  margin-top: 8px;
   border-top: 1px solid hsl(var(--border));
-  padding-top: 16px;
+  padding: 16px 0;
+  margin-bottom: 0;
+  height: 52px;
+  box-sizing: border-box;
 }
 
 .footer-content {
   font-size: 12px;
   color: hsl(var(--muted-foreground));
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
 }
 
 .footer-brand {
   color: hsl(var(--primary));
+}
+
+.donate-button {
+  background: none;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.donate-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.donate-button svg {
+  width: 12px;
+  height: 12px;
+}
+
+.settings-footer {
+  display: none;
 }
 
 .error-message {
@@ -662,8 +716,8 @@ body::before {
   color: hsl(var(--destructive-foreground));
   border: 1px solid hsl(var(--destructive));
   border-radius: 4px;
-  padding: 8px 16px;
-  margin: 12px 0 0 0;
+  padding: 8px 8px;
+  margin: 8px 0 0 0;
   font-family: 'JetBrains Mono', 'Source Code Pro', monospace;
   font-size: 1em;
   text-align: center;
@@ -672,12 +726,13 @@ body::before {
 
 /* Center alarm and timer notification pages */
 body:has(.terminal-container > .scan-line + .ascii-art) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  width: 100vw;
-  box-sizing: border-box;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  box-sizing: border-box !important;
 }
 
 body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
@@ -685,6 +740,28 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
   width: 500px;
   max-width: 500px;
   position: relative;
+  flex: none;
+}
+
+/* Fallback for alarm and timer pages with specific classes */
+body.alarm-page,
+body.timer-page {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  box-sizing: border-box !important;
+}
+
+body.alarm-page .terminal-container,
+body.timer-page .terminal-container {
+  min-height: auto;
+  width: 500px;
+  max-width: 500px;
+  position: relative;
+  flex: none;
 }
 
 /* Settings Screen Styles */
@@ -723,7 +800,7 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
 }
 
 .matrix-art {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .matrix-content {
@@ -784,9 +861,6 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
   font-weight: 600;
 }
 
-.settings-content {
-  padding: 0;
-}
 
 .color-palette-grid {
   display: grid;
@@ -843,55 +917,32 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
   font-weight: 500;
 }
 
-/* Color Theme Previews */
-.green-theme {
-  background: linear-gradient(45deg, hsl(120, 100%, 3%), hsl(120, 100%, 15%));
-  border-color: hsl(120, 100%, 50%);
+.clock-format-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 12px;
 }
 
-.green-theme::before {
-  background: hsl(120, 100%, 50%);
-  opacity: 0.3;
+.clock-format-option {
+  padding: 16px 12px;
 }
 
-.blue-theme {
-  background: linear-gradient(45deg, hsl(200, 100%, 3%), hsl(200, 100%, 15%));
-  border-color: hsl(200, 100%, 50%);
-}
-
-.blue-theme::before {
-  background: hsl(200, 100%, 50%);
-  opacity: 0.3;
-}
-
-.amber-theme {
-  background: linear-gradient(45deg, hsl(45, 100%, 3%), hsl(45, 100%, 15%));
-  border-color: hsl(45, 100%, 50%);
-}
-
-.amber-theme::before {
-  background: hsl(45, 100%, 50%);
-  opacity: 0.3;
-}
-
-.purple-theme {
-  background: linear-gradient(45deg, hsl(270, 100%, 3%), hsl(270, 100%, 15%));
-  border-color: hsl(270, 100%, 50%);
-}
-
-.purple-theme::before {
-  background: hsl(270, 100%, 50%);
-  opacity: 0.3;
-}
-
-.red-theme {
-  background: linear-gradient(45deg, hsl(0, 100%, 3%), hsl(0, 100%, 15%));
-  border-color: hsl(0, 100%, 50%);
-}
-
-.red-theme::before {
-  background: hsl(0, 100%, 50%);
-  opacity: 0.3;
+.format-preview {
+  width: auto;
+  height: 24px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 2px;
+  background-color: hsl(var(--input));
+  color: hsl(var(--primary));
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  min-width: 60px;
 }
 
 /* Color Theme Variables */
@@ -955,24 +1006,24 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
   --ring: 45 100% 50%;
 }
 
-:root[data-theme="purple"] {
-  --background: 270 100% 3%;
-  --foreground: 270 100% 80%;
-  --card: 270 100% 4%;
-  --card-foreground: 270 100% 80%;
-  --primary: 270 100% 50%;
-  --primary-foreground: 270 100% 5%;
-  --secondary: 270 50% 15%;
-  --secondary-foreground: 270 100% 80%;
-  --muted: 270 50% 8%;
-  --muted-foreground: 270 50% 60%;
-  --accent: 270 100% 40%;
-  --accent-foreground: 270 100% 5%;
+:root[data-theme="pink"] {
+  --background: 330 100% 3%;
+  --foreground: 330 100% 80%;
+  --card: 330 100% 4%;
+  --card-foreground: 330 100% 80%;
+  --primary: 330 100% 50%;
+  --primary-foreground: 330 100% 5%;
+  --secondary: 330 50% 15%;
+  --secondary-foreground: 330 100% 80%;
+  --muted: 330 50% 8%;
+  --muted-foreground: 330 50% 60%;
+  --accent: 330 100% 40%;
+  --accent-foreground: 330 100% 5%;
   --destructive: 0 100% 50%;
-  --destructive-foreground: 270 100% 5%;
-  --border: 270 50% 20%;
-  --input: 270 50% 8%;
-  --ring: 270 100% 50%;
+  --destructive-foreground: 330 100% 5%;
+  --border: 330 50% 20%;
+  --input: 330 50% 8%;
+  --ring: 330 100% 50%;
 }
 
 :root[data-theme="red"] {
@@ -1020,3 +1071,56 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
 #matrix-rain-4 {
   animation-delay: 1.5s;
 }
+
+/* Color Theme Previews */
+.green-theme {
+  background: linear-gradient(45deg, hsl(120, 100%, 3%), hsl(120, 100%, 15%));
+  border-color: hsl(120, 100%, 50%);
+}
+
+.green-theme::before {
+  background: hsl(120, 100%, 50%);
+  opacity: 0.3;
+}
+
+.blue-theme {
+  background: linear-gradient(45deg, hsl(200, 100%, 3%), hsl(200, 100%, 15%));
+  border-color: hsl(200, 100%, 50%);
+}
+
+.blue-theme::before {
+  background: hsl(200, 100%, 50%);
+  opacity: 0.3;
+}
+
+.amber-theme {
+  background: linear-gradient(45deg, hsl(45, 100%, 3%), hsl(45, 100%, 15%));
+  border-color: hsl(45, 100%, 50%);
+}
+
+.amber-theme::before {
+  background: hsl(45, 100%, 50%);
+  opacity: 0.3;
+}
+
+.pink-theme {
+  background: linear-gradient(45deg, hsl(330, 100%, 3%), hsl(330, 100%, 15%));
+  border-color: hsl(330, 100%, 50%);
+}
+
+.pink-theme::before {
+  background: hsl(330, 100%, 50%);
+  opacity: 0.3;
+}
+
+.red-theme {
+  background: linear-gradient(45deg, hsl(0, 100%, 3%), hsl(0, 100%, 15%));
+  border-color: hsl(0, 100%, 50%);
+}
+
+.red-theme::before {
+  background: hsl(0, 100%, 50%);
+  opacity: 0.3;
+}
+
+/* Color Theme Variables */

@@ -3,6 +3,36 @@
  */
 
 /**
+ * Formats the current time and date for display
+ * @param {string} format - Clock format ('12' or '24')
+ * @returns {string} Formatted time string (DD/MM/YYYY HH:MM:SS)
+ */
+window.formatCurrentTime = function(format = '24') {
+  const now = new Date();
+  const pad = n => n.toString().padStart(2, '0');
+  const dateStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+  
+  let timeStr;
+  if (format === '12') {
+    timeStr = now.toLocaleTimeString('en-US', { 
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  } else {
+    timeStr = now.toLocaleTimeString('en-US', { 
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  }
+  
+  return `${dateStr} ${timeStr}`;
+}
+
+/**
  * Formats a duration in milliseconds to a human-readable string
  * @param {number} ms - Duration in milliseconds
  * @param {boolean} showSeconds - Whether to show seconds in the output
@@ -75,17 +105,7 @@ window.getTimeUntilAlarm = function(timeString, showSeconds = false) {
   }
 }
 
-/**
- * Formats current time for display
- * @returns {string} Formatted time string (DD/MM/YYYY HH:MM:SS)
- */
-window.formatCurrentTime = function() {
-  const now = new Date();
-  const pad = n => n.toString().padStart(2, '0');
-  const dateStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
-  const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-  return `${dateStr} ${timeStr}`;
-}
+
 
 /**
  * Validates time input in HH:MM format
@@ -141,9 +161,10 @@ window.safeEncodeURIComponent = function(str) {
 
 /**
  * Creates a default alarm time (current time + 1 hour)
- * @returns {string} Time string in HH:MM format
+ * @param {string} format - Clock format ('12' or '24')
+ * @returns {string} Time string in appropriate format
  */
-window.getDefaultAlarmTime = function() {
+window.getDefaultAlarmTime = function(format = '24') {
   const now = new Date();
   now.setHours(now.getHours() + 1);
 
@@ -152,7 +173,15 @@ window.getDefaultAlarmTime = function() {
     now.setMinutes(59);
   }
 
-  return now.toTimeString().slice(0, 5);
+  if (format === '12') {
+    return now.toLocaleTimeString('en-US', {
+      hour12: true,
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  } else {
+    return now.toTimeString().slice(0, 5);
+  }
 }
 
 /**
@@ -163,4 +192,54 @@ window.getDefaultAlarmTime = function() {
  */
 window.isValidLabel = function(label, maxLength = 25) {
   return typeof label === 'string' && label.length <= maxLength;
+}
+
+/**
+ * Converts 12-hour time format to 24-hour format
+ * @param {string} timeString - Time in 12-hour format (e.g., "2:30 PM")
+ * @returns {string|null} Time in 24-hour format (HH:MM) or null if invalid
+ */
+window.convert12to24Hour = function(timeString) {
+  const time12hRegex = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+  const match = timeString.trim().match(time12hRegex);
+  
+  if (!match) return null;
+  
+  let [, hours, minutes, period] = match;
+  hours = parseInt(hours);
+  minutes = parseInt(minutes);
+  
+  if (hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+  
+  if (period.toUpperCase() === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period.toUpperCase() === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Converts 24-hour time format to 12-hour format for display
+ * @param {string} time24 - Time in 24-hour format (HH:MM)
+ * @returns {string} Time in 12-hour format (H:MM AM/PM)
+ */
+window.format24to12Hour = function(time24) {
+  if (!time24 || !time24.includes(':')) return time24;
+  
+  const [hours, minutes] = time24.split(':');
+  const hour24 = parseInt(hours);
+  
+  if (hour24 === 0) {
+    return `12:${minutes} AM`;
+  } else if (hour24 < 12) {
+    return `${hour24}:${minutes} AM`;
+  } else if (hour24 === 12) {
+    return `12:${minutes} PM`;
+  } else {
+    return `${hour24 - 12}:${minutes} PM`;
+  }
 }

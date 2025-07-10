@@ -14,6 +14,7 @@ let headerPromptEl;
 let alarms = [];
 let timers = [];
 let currentTheme = 'green';
+let clockFormat = '24'; // '12' or '24'
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateUI();
   startTimeUpdates();
   setDefaultAlarmTime();
+  updateAlarmInputFormat(); // Ensure input format is set after all initialization
 });
 
 function initializeElements() {
@@ -95,6 +97,25 @@ function setupEventListeners() {
   newTimerLabelEl.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addTimer();
   });
+
+  // Donate button listener
+  const donateButton = document.querySelector('.donate-button');
+  if (donateButton) {
+    donateButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.tabs.create({ 
+        url: 'https://www.buymeacoffee.com/asciiclock' 
+      });
+    });
+  }
+
+  // Clock format options
+  document.querySelectorAll('.clock-format-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const format = option.dataset.format;
+      changeClockFormat(format);
+    });
+  });
 }
 
 async function loadData() {
@@ -102,19 +123,30 @@ async function loadData() {
     const result = await chrome.storage.local.get([
       window.STORAGE_KEYS.ALARMS, 
       window.STORAGE_KEYS.TIMERS,
-      window.STORAGE_KEYS.THEME
+      window.STORAGE_KEYS.THEME,
+      window.STORAGE_KEYS.CLOCK_FORMAT
     ]);
     alarms = result[window.STORAGE_KEYS.ALARMS] || [];
     timers = result[window.STORAGE_KEYS.TIMERS] || [];
     currentTheme = result[window.STORAGE_KEYS.THEME] || 'green';
+    clockFormat = result[window.STORAGE_KEYS.CLOCK_FORMAT] || '24';
     
-    // Apply saved theme
+    // Apply saved theme and clock format
     applyTheme(currentTheme);
+    updateActiveThemeIndicator();
+    updateActiveClockFormatIndicator();
+    updateAlarmInputFormat(); // Ensure placeholder is set correctly
   } catch (error) {
     console.error('Error loading data:', error);
     alarms = [];
     timers = [];
     currentTheme = 'green';
+    clockFormat = '24';
+    // Apply defaults if loading failed
+    applyTheme(currentTheme);
+    updateActiveThemeIndicator();
+    updateActiveClockFormatIndicator();
+    updateAlarmInputFormat(); // Ensure placeholder is set correctly
   }
 }
 
@@ -122,7 +154,7 @@ async function loadData() {
  * Sets the default alarm time to current time + 1 hour
  */
 function setDefaultAlarmTime() {
-  newAlarmTimeEl.value = window.getDefaultAlarmTime();
+  newAlarmTimeEl.value = window.getDefaultAlarmTime(clockFormat);
 }
 
 /**
@@ -130,32 +162,112 @@ function setDefaultAlarmTime() {
  * @param {Event} e - Input event
  */
 function handleTimeInputMask(e) {
-  let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
-  
-  // Limit to 4 digits maximum
-  if (value.length > 4) {
-    value = value.slice(0, 4);
-  }
-  
-  // Format as HH:MM and validate
-  if (value.length >= 3) {
-    let hours = value.slice(0, 2);
-    let minutes = value.slice(2);
+  if (clockFormat === '12') {
+    // Handle 12-hour format with AM/PM
+    let value = e.target.value.toUpperCase();
     
-    // Auto-correct hours (max 23)
-    if (parseInt(hours) > 23) {
-      hours = '23';
+    // Don't reformat if user is deleting (value is getting shorter)
+    const previousValue = e.target.getAttribute('data-prev-value') || '';
+    const isDeleting = value.length < previousValue.length;
+    
+    if (isDeleting) {
+      // Just store the current value and return, allow natural deletion
+      e.target.setAttribute('data-prev-value', value);
+      return;
     }
     
-    // Auto-correct minutes (max 59)
-    if (parseInt(minutes) > 59) {
-      minutes = '59';
+    // Remove invalid characters, keep digits, colon, A, M, P, and space
+    value = value.replace(/[^0-9APM:\s]/g, '');
+    
+    // Extract AM/PM if present
+    const ampmMatch = value.match(/(AM|PM)/);
+    const timeOnly = value.replace(/\s*(AM|PM)\s*/g, '');
+    
+    // Extract digits for time formatting
+    let digits = timeOnly.replace(/[^\d]/g, '');
+    
+    // Limit to 4 digits maximum
+    if (digits.length > 4) {
+      digits = digits.slice(0, 4);
     }
     
-    value = hours + ':' + minutes;
+    let formattedTime = '';
+    
+    if (digits.length === 0) {
+      formattedTime = '';
+    } else if (digits.length <= 2) {
+      // Just hours entered
+      let hours = parseInt(digits);
+      if (hours > 12) {
+        hours = 12;
+      } else if (hours === 0 && digits.length === 2) {
+        hours = 12;
+      }
+      formattedTime = hours.toString();
+    } else {
+      // Hours and minutes
+      let hours = digits.slice(0, -2);
+      let minutes = digits.slice(-2);
+      
+      // Validate and fix hours (1-12 for 12-hour format)
+      hours = parseInt(hours);
+      if (hours > 12) {
+        hours = 12;
+      } else if (hours === 0) {
+        hours = 12;
+      }
+      
+      // Validate and fix minutes (0-59)
+      minutes = parseInt(minutes);
+      if (minutes > 59) {
+        minutes = 59;
+      }
+      
+      formattedTime = hours + ':' + minutes.toString().padStart(2, '0');
+    }
+    
+    // Add AM/PM
+    if (formattedTime && formattedTime.includes(':')) {
+      if (ampmMatch) {
+        formattedTime += ' ' + ampmMatch[1];
+      } else {
+        formattedTime += ' AM';
+      }
+    } else if (formattedTime && ampmMatch) {
+      formattedTime += ' ' + ampmMatch[1];
+    }
+    
+    e.target.value = formattedTime;
+    e.target.setAttribute('data-prev-value', formattedTime);
+  } else {
+    // Handle 24-hour format (existing logic)
+    let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
+    
+    // Limit to 4 digits maximum
+    if (value.length > 4) {
+      value = value.slice(0, 4);
+    }
+    
+    // Format as HH:MM and validate
+    if (value.length >= 3) {
+      let hours = value.slice(0, 2);
+      let minutes = value.slice(2);
+      
+      // Auto-correct hours (max 23)
+      if (parseInt(hours) > 23) {
+        hours = '23';
+      }
+      
+      // Auto-correct minutes (max 59)
+      if (parseInt(minutes) > 59) {
+        minutes = '59';
+      }
+      
+      value = hours + ':' + minutes;
+    }
+    
+    e.target.value = value;
   }
-  
-  e.target.value = value;
 }
 
 /**
@@ -165,12 +277,36 @@ function handleTimeInputMask(e) {
 function handleTimeInputKeydown(e) {
   const allowedKeys = [
     'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'
   ];
+  
+  // Allow Ctrl+A for select all
+  if (e.ctrlKey && e.key === 'a') {
+    return;
+  }
+  
+  // Handle Enter key to submit alarm
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addAlarm();
+    return;
+  }
+  
+  // For 12-hour format, handle A/P key to toggle AM/PM
+  if (clockFormat === '12' && (e.key === 'a' || e.key === 'A' || e.key === 'p' || e.key === 'P')) {
+    e.preventDefault();
+    toggleAmPm(e.target, e.key.toUpperCase());
+    return;
+  }
   
   // Allow navigation keys and numbers 0-9
   if (allowedKeys.includes(e.key) || 
       (e.key >= '0' && e.key <= '9')) {
+    return;
+  }
+  
+  // For 12-hour format, also allow M for AM/PM completion
+  if (clockFormat === '12' && (e.key === 'm' || e.key === 'M')) {
     return;
   }
   
@@ -198,8 +334,22 @@ function handleTimerInputMask(e) {
  * @param {KeyboardEvent} e - Keydown event
  */
 function handleTimerInputKeydown(e) {
+  // Handle Enter key to submit timer
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addTimer();
+    return;
+  }
+  
+  // Handle Ctrl+A for select all
+  if (e.ctrlKey && e.key.toLowerCase() === 'a') {
+    e.preventDefault();
+    e.target.select();
+    return;
+  }
+  
   const allowedKeys = [
-    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+    'Backspace', 'Delete', 'Tab', 'Escape',
     'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
   ];
   
@@ -222,14 +372,14 @@ function startTimeUpdates() {
   setInterval(() => {
     updateTime();
     updateUI(); // Update UI every second for real-time countdowns
-  }, window.window.ANIMATION_INTERVALS.TIME_UPDATE);
+  }, window.ANIMATION_INTERVALS.TIME_UPDATE);
 }
 
 /**
  * Updates the current time display
  */
 function updateTime() {
-  currentTimeEl.textContent = window.formatCurrentTime();
+  currentTimeEl.textContent = window.formatCurrentTime(clockFormat);
 }
 
 function updateUI() {
@@ -307,6 +457,13 @@ function renderTimers() {
 
 function createAlarmHTML(alarm) {
   const timeLeft = window.getTimeUntilAlarm(alarm.time, true);
+  
+  // Format alarm time according to selected clock format
+  let displayTime = alarm.time; // alarm.time is always in 24-hour format
+  if (clockFormat === '12') {
+    displayTime = window.format24to12Hour(alarm.time);
+  }
+  
   return `
     <div class="list-item">
       <div class="item-content">
@@ -316,7 +473,7 @@ function createAlarmHTML(alarm) {
           <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
           <path d="M4 2C2.8 3.7 2 5.7 2 8"/>
         </svg>
-        <span class="item-time">${alarm.time}</span>
+        <span class="item-time">${displayTime}</span>
         <span class="item-label">— ${alarm.label}</span>
         ${timeLeft ? `<span class="item-label">(${timeLeft})</span>` : ''}
         ${timeLeft ? `<div class="status-indicator"></div>` : ''}
@@ -369,12 +526,24 @@ function showError(msg) {
  * Adds a new alarm with validation
  */
 async function addAlarm() {
-  const time = newAlarmTimeEl.value;
+  const timeInput = newAlarmTimeEl.value;
   const label = newAlarmLabelEl.value.trim() || 'alarm'; // Default label
   
-  // Validation
-  if (!time || !window.isValidTime(time)) {
-    showError('Please enter a valid time (HH:MM)');
+  let time = timeInput;
+  
+  // Convert 12-hour format to 24-hour format if needed
+  if (clockFormat === '12') {
+    time = window.convert12to24Hour(timeInput);
+    if (!time) {
+      showError('Please enter a valid time (H:MM AM/PM)');
+      return;
+    }
+  }
+  
+  // Validation for 24-hour format
+  if (!window.isValidTime(time)) {
+    const formatHint = clockFormat === '12' ? '(H:MM AM/PM)' : '(HH:MM)';
+    showError(`Please enter a valid time ${formatHint}`);
     return;
   }
   
@@ -385,7 +554,7 @@ async function addAlarm() {
   
   const alarm = {
     id: window.generateId(),
-    time: time,
+    time: time, // Always store in 24-hour format
     label: label
   };
   
@@ -735,7 +904,14 @@ function showSettings() {
   backBtnEl.style.display = 'flex';
   settingsBtnEl.style.display = 'none';
   
+  // Show donate button
+  const donateButton = document.querySelector('.donate-button');
+  if (donateButton) {
+    donateButton.style.display = 'flex';
+  }
+  
   updateActiveThemeIndicator();
+  updateActiveClockFormatIndicator(); // Also update clock format indicators
 }
 
 /**
@@ -749,12 +925,18 @@ function showMain() {
   headerPromptEl.textContent = '┌─[alarm@timer]─[~]';
   backBtnEl.style.display = 'none';
   settingsBtnEl.style.display = 'flex';
+  
+  // Hide donate button
+  const donateButton = document.querySelector('.donate-button');
+  if (donateButton) {
+    donateButton.style.display = 'none';
+  }
 }
 
 // Theme Functions
 /**
  * Changes the app theme
- * @param {string} theme - Theme name ('green', 'blue', 'amber', 'purple', 'red')
+ * @param {string} theme - Theme name ('green', 'blue', 'amber', 'pink', 'red')
  */
 async function changeTheme(theme) {
   currentTheme = theme;
@@ -790,12 +972,77 @@ function updateActiveThemeIndicator() {
   });
 }
 
+// Clock Format Functions
+/**
+ * Changes the app clock format
+ * @param {string} format - Clock format ('12' or '24')
+ */
+async function changeClockFormat(format) {
+  clockFormat = format;
+  updateActiveClockFormatIndicator();
+  setDefaultAlarmTime(); // Update default alarm time with new format
+  updateTime(); // Update current time display immediately
+  renderAlarms(); // Re-render alarms to update time format display
+  
+  // Clear the current input to avoid format conflicts
+  const alarmTimeInput = document.getElementById('new-alarm-time');
+  if (alarmTimeInput) {
+    alarmTimeInput.value = '';
+  }
+  
+  // Save clock format to storage
+  try {
+    await chrome.storage.local.set({ [window.STORAGE_KEYS.CLOCK_FORMAT]: format });
+  } catch (error) {
+    console.error('Error saving clock format:', error);
+  }
+}
+
+/**
+ * Updates the active clock format indicator in settings
+ */
+function updateActiveClockFormatIndicator() {
+  // Get all clock format options
+  const clockFormatOptions = document.querySelectorAll('.clock-format-option');
+  
+  // Remove active class from all options first
+  clockFormatOptions.forEach(option => {
+    option.classList.remove('active');
+  });
+  
+  // Add active class to the selected format
+  clockFormatOptions.forEach(option => {
+    if (option.dataset.format === clockFormat) {
+      option.classList.add('active');
+    }
+  });
+  
+  // Update alarm input placeholder and format
+  updateAlarmInputFormat();
+}
+
+/**
+ * Updates the alarm input placeholder and format based on clock format
+ */
+function updateAlarmInputFormat() {
+  const alarmTimeInput = document.getElementById('new-alarm-time');
+  if (alarmTimeInput) {
+    if (clockFormat === '12') {
+      alarmTimeInput.placeholder = "H:MM AM/PM (12h format)";
+    } else {
+      alarmTimeInput.placeholder = "HH:MM (24h format)";
+    }
+    // Initialize previous value tracking for delete detection
+    alarmTimeInput.setAttribute('data-prev-value', alarmTimeInput.value || '');
+  }
+}
+
 // Matrix Rain Animation
 /**
  * Starts the matrix-style falling characters animation
  */
 function startMatrixRainAnimation() {
-  const matrixChars = ['0', '1', '█', '▓', '▒', '░', '◆', '◇', '▲', '▼', '◀', '▶'];
+  const matrixChars = ['0', '1', '█', '▓', '▒', '░', ' ', '  ', ';', ',', '/', '|', '-', '_', '+', '=', '*', '#', '@', '%', '&'];
   const rainElements = [
     document.getElementById('matrix-rain'),
     document.getElementById('matrix-rain-2'),
@@ -817,7 +1064,7 @@ function startMatrixRainAnimation() {
   }
   
   function generateMatrixPattern() {
-    const patternLength = 55;
+    const patternLength = 68;
     return Array(patternLength).fill().map(() => getRandomMatrixChar());
   }
   
@@ -832,3 +1079,34 @@ function startMatrixRainAnimation() {
 // Make functions global for onclick handlers
 window.deleteAlarm = deleteAlarm;
 window.deleteTimer = deleteTimer;
+
+/**
+ * Toggles AM/PM in 12-hour format when A or P is pressed
+ * @param {HTMLInputElement} input - The time input element
+ * @param {string} key - The key pressed ('A' or 'P')
+ */
+function toggleAmPm(input, key) {
+  let value = input.value.toUpperCase();
+  
+  // If there's already AM or PM, replace it
+  if (value.includes('AM') || value.includes('PM')) {
+    if (key === 'A') {
+      value = value.replace(/(AM|PM)/, 'AM');
+    } else if (key === 'P') {
+      value = value.replace(/(AM|PM)/, 'PM');
+    }
+  } else {
+    // If no AM/PM exists, add it
+    value = value.trim();
+    if (value) {
+      if (key === 'A') {
+        value += ' AM';
+      } else if (key === 'P') {
+        value += ' PM';
+      }
+    }
+  }
+  
+  input.value = value;
+  input.setAttribute('data-prev-value', value);
+}

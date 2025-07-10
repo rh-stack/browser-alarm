@@ -35,17 +35,11 @@
                 <path d="M19 12H5" />
               </svg>
             </button>
-            <span class="terminal-prompt" id="header-prompt"
-              >┌─[alarm@timer]─[~]</span
-            >
-            <span class="time-info" id="current-time"></span>
-          </div>
-          <div class="header-right">
             <button id="settings-btn" class="icon-button" title="Settings">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -60,6 +54,12 @@
                 <circle cx="7" cy="7" r="3" />
               </svg>
             </button>
+            <span class="terminal-prompt" id="header-prompt"
+              >┌─[alarm@timer]─[~]</span
+            >
+          </div>
+          <div class="header-right">
+            <span class="time-info" id="current-time"></span>
           </div>
         </div>
       </div>
@@ -274,7 +274,6 @@
                   <span id="matrix-title">SYSTEM CONFIGURATION</span>
                   <span id="matrix-indicator">◈</span> ║
                 </div>
-                <div class="matrix-line">║ ║</div>
                 <div class="matrix-line">
                   ║
                   <span id="matrix-rain"
@@ -303,7 +302,6 @@
                   >
                   ║
                 </div>
-                <div class="matrix-line">║ ║</div>
                 <div class="matrix-line">
                   ╚═════════════════════════════════════════════════════════════════════╝
                 </div>
@@ -312,8 +310,8 @@
           </div>
         </div>
 
-        <div class="settings-content">
-          <div class="settings-section">
+        <div class="main-grid">
+          <div class="section">
             <div class="section-header">
               <div class="section-title">
                 <svg
@@ -322,12 +320,12 @@
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M4 20h16" />
+                  <path d="m14.622 17.897-10.68-2.913" />
                   <path
-                    d="M8 20v-4.306a3 3 0 0 0-1.657-2.683L4 11.5v-1l2.343-1.511A3 3 0 0 0 8 6.306V2"
+                    d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"
                   />
                   <path
-                    d="M16 20v-4.306a3 3 0 0 1 1.657-2.683L20 11.5v-1l-2.343-1.511A3 3 0 0 1 16 6.306V2"
+                    d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"
                   />
                 </svg>
                 <span class="section-name">COLOR THEME</span>
@@ -359,15 +357,54 @@
                 </div>
                 <div
                   class="color-option"
-                  data-theme="purple"
-                  title="Neon Purple"
+                  data-theme="pink"
+                  title="Neon Pink"
                 >
-                  <div class="color-preview purple-theme"></div>
-                  <span class="color-name">PURPLE</span>
+                  <div class="color-preview pink-theme"></div>
+                  <span class="color-name">PINK</span>
                 </div>
                 <div class="color-option" data-theme="red" title="Alert Red">
                   <div class="color-preview red-theme"></div>
                   <span class="color-name">RED</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">
+                <svg
+                  class="section-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12,6 12,12 16,14" />
+                </svg>
+                <span class="section-name">CLOCK FORMAT</span>
+              </div>
+            </div>
+
+            <div class="section-content">
+              <div class="form-label">└─ Select time format:</div>
+              <div class="clock-format-grid">
+                <div
+                  class="color-option clock-format-option"
+                  data-format="24"
+                  title="24-Hour Format (Military Time)"
+                >
+                  <div class="format-preview">23:59</div>
+                  <span class="color-name">24-HOUR</span>
+                </div>
+                <div
+                  class="color-option clock-format-option"
+                  data-format="12"
+                  title="12-Hour Format (AM/PM)"
+                >
+                  <div class="format-preview">11:59 PM</div>
+                  <span class="color-name">12-HOUR</span>
                 </div>
               </div>
             </div>
@@ -378,7 +415,26 @@
       <div id="error-message" class="error-message" style="display: none"></div>
       <div class="footer">
         <div class="footer-content">
-          <span class="footer-brand">ASCII Clock</span> v0.1 | Chrome Extension
+          <div class="footer-left">
+            <span class="footer-brand">ASCII Clock</span>&nbsp;v0.1 | Chrome Extension
+          </div>
+          <div class="footer-right">
+            <a
+              href="#"
+              class="donate-button settings-footer"
+              title="Support development"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              Support Dev
+            </a>
+          </div>
         </div>
       </div>
     </div>

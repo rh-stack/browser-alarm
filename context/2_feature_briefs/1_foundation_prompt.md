@@ -41,6 +41,21 @@ Below is the initial list of user stories.
         4.6.4 The Alarm notification doesn't close automatically, it's visible until I click the button.
 
 https://www.ascii-code.com/
+https://theasciicode.com.ar/
+
+Matrix Digital Rain Animation
+Option 1: Classic Matrix-style with Japanese katakana and numbers
+  const matrixChars = ['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク', 'ケ', 'コ', 'サ', 'シ', 'ス', 'セ', 'ソ', 'タ', 'チ', 'ツ', 'テ', 'ト', 'ナ', 'ニ', 'ヌ', 'ネ', 'ノ', 'ハ', 'ヒ', 'フ', 'ヘ', 'ホ', 'マ', 'ミ', 'ム', 'メ', 'モ', 'ヤ', 'ユ', 'ヨ', 'ラ', 'リ', 'ル', 'レ', 'ロ', 'ワ', 'ヲ', 'ン', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  
+Option 2: Simpler ASCII-based Matrix look
+  const matrixChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'Z', 'X', 'Y', ':', '.', '"', '=', '*', '+', '-', '|', '<', '>'];
+  
+Option 3: Cyberpunk/Terminal style
+  const matrixChars = ['0', '1', '█', '▓', '▒', '░', ':', ';', '.', ',', '/', '\\', '|', '-', '_', '+', '=', '*', '#', '@', '%', '&'];
+  
+Option 4: Pure binary Matrix style
+  const matrixChars = ['0', '1', '0', '1', '0', '1', '0', '1', ':', '.', ' ', '█', '▓', '▒'];
+
 
 ## UI:
 Please use the files in the [UI reference](../1_ui_reference) folder as the complete UI specification for this Chrome extension. These files contain:
