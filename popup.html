@@ -13,149 +13,363 @@
       <div class="header">
         <div class="header-content">
           <div class="header-left">
-            <span class="terminal-prompt">┌─[alarm@timer]─[~]</span>
+            <button
+              id="back-btn"
+              class="icon-button"
+              title="Back"
+              style="display: none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-arrow-left"
+              >
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
+              </svg>
+            </button>
+            <span class="terminal-prompt" id="header-prompt"
+              >┌─[alarm@timer]─[~]</span
+            >
             <span class="time-info" id="current-time"></span>
           </div>
-        </div>
-      </div>
-
-      <div class="ascii-art">
-        <div class="ascii-content">
-          <div class="ascii-grid">
-            <!-- Left Panel -->
-            <div class="ascii-panel left-panel">
-              <div class="ascii-line">╔═══════╗</div>
-              <div class="ascii-line">║ <span id="left-status">●</span> <span id="left-label">SYS</span> ║</div>
-              <div class="ascii-line">║      ║</div>
-              <div class="ascii-line">║ <span id="uptime-bar">████</span> ║</div>
-              <div class="ascii-line">║ <span id="cpu-indicator">█░░░</span> ║</div>
-              <div class="ascii-line">║ <span id="mem-indicator">██░░</span> ║</div>
-              <div class="ascii-line">║      ║</div>
-              <div class="ascii-line">╚═══════╝</div>
-            </div>
-
-            <!-- Main Panel -->
-            <div class="ascii-panel main-panel">
-              <div class="ascii-line">╔════════════════════════════════════╗</div>
-              <div class="ascii-line">║ <span id="system-status">●</span> <span id="system-title">ASCII CLOCK SYSTEM</span> <span id="system-indicator">◐</span> ║</div>
-              <div class="ascii-line">║                                          ║</div>
-              <div class="ascii-line">║ <span id="progress-bar">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span> ║</div>
-              <div class="ascii-line">║ <span id="status-prefix">►</span> Active: <span id="active-count" class="active-count">00</span> <span id="status-suffix">◄</span> <span id="activity-indicator">░░░░░░░░░░░░░░░░░░░░░░░░░░</span> ║</div>
-              <div class="ascii-line">║ <span id="bottom-bar">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span> ║</div>
-              <div class="ascii-line">║ <span id="scan-indicator">│</span> <span id="status-message">System ready</span> <span id="scan-indicator-2">│</span> ║</div>
-              <div class="ascii-line">╚════════════════════════════════════╝</div>
-            </div>
-
-            <!-- Right Panel -->
-            <div class="ascii-panel right-panel">
-              <div class="ascii-line">╔════════╗</div>
-              <div class="ascii-line">║ <span id="right-status">◆</span> <span id="right-label">LOG</span> ║</div>
-              <div class="ascii-line">║       ║</div>
-              <div class="ascii-line">║ <span id="log-line-1">█████</span> ║</div>
-              <div class="ascii-line">║ <span id="log-line-2">███░░</span> ║</div>
-              <div class="ascii-line">║ <span id="log-line-3">░░░░░</span> ║</div>
-              <div class="ascii-line">║       ║</div>
-              <div class="ascii-line">╚════════╝</div>
-            </div>
+          <div class="header-right">
+            <button id="settings-btn" class="icon-button" title="Settings">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-settings2-icon lucide-settings-2"
+              >
+                <path d="M14 17H5" />
+                <path d="M19 7h-9" />
+                <circle cx="17" cy="17" r="3" />
+                <circle cx="7" cy="7" r="3" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="main-grid">
-        <div class="section">
-          <div class="section-header">
-            <div class="section-title">
-              <svg
-                class="section-icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M10.268 21a2 2 0 0 0 3.464 0" />
-                <path d="M22 8c0-2.3-.8-4.3-2-6" />
-                <path
-                  d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
-                />
-                <path d="M4 2C2.8 3.7 2 5.7 2 8" />
-              </svg>
-              <span class="section-name">ALARMS</span>
-              <span class="section-count"
-                >(<span id="alarms-count">0</span>)</span
-              >
-            </div>
-          </div>
-
-          <div class="section-content">
-            <div class="form-section">
-              <div class="form-label">└─ Add new alarm:</div>
-              <div class="form-grid">
-                <input
-                  type="text"
-                  id="new-alarm-time"
-                  class="input"
-                  placeholder="HH:MM (24h format)"
-                />
-                <input
-                  type="text"
-                  id="new-alarm-label"
-                  class="input"
-                  placeholder="Label"
-                  maxlength="25"
-                />
-                <button id="add-alarm-btn" class="button">+</button>
+      <!-- Main Screen -->
+      <div id="main-screen" class="main-screen">
+        <div class="ascii-art">
+          <div class="ascii-content">
+            <div class="ascii-grid">
+              <!-- Left Panel -->
+              <div class="ascii-panel left-panel">
+                <div class="ascii-line">╔═══════╗</div>
+                <div class="ascii-line">
+                  ║ <span id="left-status">●</span>
+                  <span id="left-label">SYS</span> ║
+                </div>
+                <div class="ascii-line">║ ║</div>
+                <div class="ascii-line">
+                  ║ <span id="uptime-bar">████</span> ║
+                </div>
+                <div class="ascii-line">
+                  ║ <span id="cpu-indicator">█░░░</span> ║
+                </div>
+                <div class="ascii-line">
+                  ║ <span id="mem-indicator">██░░</span> ║
+                </div>
+                <div class="ascii-line">║ ║</div>
+                <div class="ascii-line">╚═══════╝</div>
               </div>
-            </div>
-            <div class="item-list" id="alarms-list">
-              <div class="empty-state">No alarms configured</div>
+
+              <!-- Main Panel -->
+              <div class="ascii-panel main-panel">
+                <div class="ascii-line">
+                  ╔════════════════════════════════════╗
+                </div>
+                <div class="ascii-line">
+                  ║ <span id="system-status">●</span>
+                  <span id="system-title">ASCII CLOCK SYSTEM</span>
+                  <span id="system-indicator">◐</span> ║
+                </div>
+                <div class="ascii-line">║ ║</div>
+                <div class="ascii-line">
+                  ║
+                  <span id="progress-bar"
+                    >▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span
+                  >
+                  ║
+                </div>
+                <div class="ascii-line">
+                  ║ <span id="status-prefix">►</span> Active:
+                  <span id="active-count" class="active-count">00</span>
+                  <span id="status-suffix">◄</span>
+                  <span id="activity-indicator"
+                    >░░░░░░░░░░░░░░░░░░░░░░░░░░</span
+                  >
+                  ║
+                </div>
+                <div class="ascii-line">
+                  ║
+                  <span id="bottom-bar"
+                    >▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span
+                  >
+                  ║
+                </div>
+                <div class="ascii-line">
+                  ║ <span id="scan-indicator">│</span>
+                  <span id="status-message">System ready</span>
+                  <span id="scan-indicator-2">│</span> ║
+                </div>
+                <div class="ascii-line">
+                  ╚════════════════════════════════════╝
+                </div>
+              </div>
+
+              <!-- Right Panel -->
+              <div class="ascii-panel right-panel">
+                <div class="ascii-line">╔════════╗</div>
+                <div class="ascii-line">
+                  ║ <span id="right-status">◆</span>
+                  <span id="right-label">LOG</span> ║
+                </div>
+                <div class="ascii-line">║ ║</div>
+                <div class="ascii-line">
+                  ║ <span id="log-line-1">█████</span> ║
+                </div>
+                <div class="ascii-line">
+                  ║ <span id="log-line-2">███░░</span> ║
+                </div>
+                <div class="ascii-line">
+                  ║ <span id="log-line-3">░░░░░</span> ║
+                </div>
+                <div class="ascii-line">║ ║</div>
+                <div class="ascii-line">╚════════╝</div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="section">
-          <div class="section-header">
-            <div class="section-title">
-              <svg
-                class="item-icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 6v6l4 2" />
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-              <span class="section-name">TIMERS</span>
-              <span class="section-count"
-                >(<span id="timers-count">0</span>)</span
-              >
+        <div class="main-grid">
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">
+                <svg
+                  class="section-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+                  <path d="M22 8c0-2.3-.8-4.3-2-6" />
+                  <path
+                    d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+                  />
+                  <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+                </svg>
+                <span class="section-name">ALARMS</span>
+                <span class="section-count"
+                  >(<span id="alarms-count">0</span>)</span
+                >
+              </div>
+            </div>
+
+            <div class="section-content">
+              <div class="form-section">
+                <div class="form-label">└─ Add new alarm:</div>
+                <div class="form-grid">
+                  <input
+                    type="text"
+                    id="new-alarm-time"
+                    class="input"
+                    placeholder="HH:MM (24h format)"
+                  />
+                  <input
+                    type="text"
+                    id="new-alarm-label"
+                    class="input"
+                    placeholder="Label"
+                    maxlength="25"
+                  />
+                  <button id="add-alarm-btn" class="button">+</button>
+                </div>
+              </div>
+              <div class="item-list" id="alarms-list">
+                <div class="empty-state">No alarms configured</div>
+              </div>
             </div>
           </div>
 
-          <div class="section-content">
-            <div class="form-section">
-              <div class="form-label">└─ Add new timer:</div>
-              <div class="form-grid-timer">
-                <input
-                  type="text"
-                  id="new-timer-minutes"
-                  class="input"
-                  placeholder="Minutes"
-                  min="1"
-                  max="999"
-                  style="flex: 1"
-                />
-                <input
-                  type="text"
-                  id="new-timer-label"
-                  class="input"
-                  placeholder="Label"
-                  maxlength="25"
-                  style="flex: 1"
-                />
-                <button id="add-timer-btn" class="button">+</button>
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">
+                <svg
+                  class="item-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 6v6l4 2" />
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
+                <span class="section-name">TIMERS</span>
+                <span class="section-count"
+                  >(<span id="timers-count">0</span>)</span
+                >
               </div>
             </div>
-            <div class="item-list" id="timers-list">
-              <div class="empty-state">No timers running</div>
+
+            <div class="section-content">
+              <div class="form-section">
+                <div class="form-label">└─ Add new timer:</div>
+                <div class="form-grid-timer">
+                  <input
+                    type="text"
+                    id="new-timer-minutes"
+                    class="input"
+                    placeholder="Minutes"
+                    min="1"
+                    max="999"
+                    style="flex: 1"
+                  />
+                  <input
+                    type="text"
+                    id="new-timer-label"
+                    class="input"
+                    placeholder="Label"
+                    maxlength="25"
+                    style="flex: 1"
+                  />
+                  <button id="add-timer-btn" class="button">+</button>
+                </div>
+              </div>
+              <div class="item-list" id="timers-list">
+                <div class="empty-state">No timers running</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Screen -->
+      <div id="settings-screen" class="settings-screen" style="display: none">
+        <div class="matrix-art">
+          <div class="matrix-content">
+            <div class="matrix-grid">
+              <!-- Matrix Animation Container -->
+              <div class="matrix-panel">
+                <div class="matrix-line">
+                  ╔═════════════════════════════════════════════════════════════════════╗
+                </div>
+                <div class="matrix-line">
+                  ║ <span id="matrix-status">◈</span>
+                  <span id="matrix-title">SYSTEM CONFIGURATION</span>
+                  <span id="matrix-indicator">◈</span> ║
+                </div>
+                <div class="matrix-line">║ ║</div>
+                <div class="matrix-line">
+                  ║
+                  <span id="matrix-rain"
+                    >░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span
+                  >
+                  ║
+                </div>
+                <div class="matrix-line">
+                  ║
+                  <span id="matrix-rain-2"
+                    >░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span
+                  >
+                  ║
+                </div>
+                <div class="matrix-line">
+                  ║
+                  <span id="matrix-rain-3"
+                    >░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span
+                  >
+                  ║
+                </div>
+                <div class="matrix-line">
+                  ║
+                  <span id="matrix-rain-4"
+                    >░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span
+                  >
+                  ║
+                </div>
+                <div class="matrix-line">║ ║</div>
+                <div class="matrix-line">
+                  ╚═════════════════════════════════════════════════════════════════════╝
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-content">
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-title">
+                <svg
+                  class="section-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M4 20h16" />
+                  <path
+                    d="M8 20v-4.306a3 3 0 0 0-1.657-2.683L4 11.5v-1l2.343-1.511A3 3 0 0 0 8 6.306V2"
+                  />
+                  <path
+                    d="M16 20v-4.306a3 3 0 0 1 1.657-2.683L20 11.5v-1l-2.343-1.511A3 3 0 0 1 16 6.306V2"
+                  />
+                </svg>
+                <span class="section-name">COLOR THEME</span>
+              </div>
+            </div>
+
+            <div class="section-content">
+              <div class="form-label">└─ Select color palette:</div>
+              <div class="color-palette-grid">
+                <div
+                  class="color-option"
+                  data-theme="green"
+                  title="Matrix Green (Default)"
+                >
+                  <div class="color-preview green-theme"></div>
+                  <span class="color-name">GREEN</span>
+                </div>
+                <div class="color-option" data-theme="blue" title="Cyber Blue">
+                  <div class="color-preview blue-theme"></div>
+                  <span class="color-name">BLUE</span>
+                </div>
+                <div
+                  class="color-option"
+                  data-theme="amber"
+                  title="Amber Terminal"
+                >
+                  <div class="color-preview amber-theme"></div>
+                  <span class="color-name">AMBER</span>
+                </div>
+                <div
+                  class="color-option"
+                  data-theme="purple"
+                  title="Neon Purple"
+                >
+                  <div class="color-preview purple-theme"></div>
+                  <span class="color-name">PURPLE</span>
+                </div>
+                <div class="color-option" data-theme="red" title="Alert Red">
+                  <div class="color-preview red-theme"></div>
+                  <span class="color-name">RED</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -164,12 +378,13 @@
       <div id="error-message" class="error-message" style="display: none"></div>
       <div class="footer">
         <div class="footer-content">
-          <span class="footer-brand">ASCII Clock</span> v0.1 | Chrome
-          Extension
+          <span class="footer-brand">ASCII Clock</span> v0.1 | Chrome Extension
         </div>
       </div>
     </div>
 
-    <script src="popup.js"></script>
+    <script src="js/constants.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/popup.js"></script>
   </body>
 </html>

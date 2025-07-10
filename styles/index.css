@@ -186,6 +186,36 @@ body::before {
   gap: 16px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.icon-button {
+  background: none;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  padding: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
 .terminal-prompt {
   color: hsl(var(--primary));
 }
@@ -655,4 +685,338 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
   width: 500px;
   max-width: 500px;
   position: relative;
+}
+
+/* Settings Screen Styles */
+.settings-screen {
+  width: 100%;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.icon-button {
+  background: none;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  padding: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.matrix-art {
+  margin-bottom: 16px;
+}
+
+.matrix-content {
+  padding: 0;
+}
+
+.matrix-grid {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.matrix-panel {
+  font-family: 'JetBrains Mono', 'Source Code Pro', monospace;
+  font-size: 12px;
+  line-height: 1.2;
+  color: hsl(var(--foreground));
+  text-align: left;
+  white-space: nowrap;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  padding: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* Fixed width for matrix rain elements to prevent container shifting and center them */
+#matrix-rain,
+#matrix-rain-2,
+#matrix-rain-3,
+#matrix-rain-4 {
+  display: inline-block;
+  font-family: 'JetBrains Mono', 'Source Code Pro', monospace;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-align: left;
+  width: 67ch;
+  overflow: hidden;
+}
+
+.matrix-line {
+  margin-bottom: 2px;
+}
+
+.matrix-line:last-child {
+  margin-bottom: 0;
+}
+
+#matrix-status,
+#matrix-indicator {
+  color: hsl(var(--primary));
+}
+
+#matrix-title {
+  color: hsl(var(--accent));
+  font-weight: 600;
+}
+
+.settings-content {
+  padding: 0;
+}
+
+.color-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.color-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 2px;
+}
+
+.color-option:hover {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--muted));
+}
+
+.color-option.active {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+.color-preview {
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  position: relative;
+}
+
+.color-preview::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  border-radius: 1px;
+}
+
+.color-name {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
+
+/* Color Theme Previews */
+.green-theme {
+  background: linear-gradient(45deg, hsl(120, 100%, 3%), hsl(120, 100%, 15%));
+  border-color: hsl(120, 100%, 50%);
+}
+
+.green-theme::before {
+  background: hsl(120, 100%, 50%);
+  opacity: 0.3;
+}
+
+.blue-theme {
+  background: linear-gradient(45deg, hsl(200, 100%, 3%), hsl(200, 100%, 15%));
+  border-color: hsl(200, 100%, 50%);
+}
+
+.blue-theme::before {
+  background: hsl(200, 100%, 50%);
+  opacity: 0.3;
+}
+
+.amber-theme {
+  background: linear-gradient(45deg, hsl(45, 100%, 3%), hsl(45, 100%, 15%));
+  border-color: hsl(45, 100%, 50%);
+}
+
+.amber-theme::before {
+  background: hsl(45, 100%, 50%);
+  opacity: 0.3;
+}
+
+.purple-theme {
+  background: linear-gradient(45deg, hsl(270, 100%, 3%), hsl(270, 100%, 15%));
+  border-color: hsl(270, 100%, 50%);
+}
+
+.purple-theme::before {
+  background: hsl(270, 100%, 50%);
+  opacity: 0.3;
+}
+
+.red-theme {
+  background: linear-gradient(45deg, hsl(0, 100%, 3%), hsl(0, 100%, 15%));
+  border-color: hsl(0, 100%, 50%);
+}
+
+.red-theme::before {
+  background: hsl(0, 100%, 50%);
+  opacity: 0.3;
+}
+
+/* Color Theme Variables */
+:root[data-theme="green"] {
+  --background: 120 100% 3%;
+  --foreground: 120 100% 80%;
+  --card: 120 100% 4%;
+  --card-foreground: 120 100% 80%;
+  --primary: 120 100% 50%;
+  --primary-foreground: 120 100% 5%;
+  --secondary: 120 50% 15%;
+  --secondary-foreground: 120 100% 80%;
+  --muted: 120 50% 8%;
+  --muted-foreground: 120 50% 60%;
+  --accent: 120 100% 40%;
+  --accent-foreground: 120 100% 5%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 120 100% 5%;
+  --border: 120 50% 20%;
+  --input: 120 50% 8%;
+  --ring: 120 100% 50%;
+}
+
+:root[data-theme="blue"] {
+  --background: 200 100% 3%;
+  --foreground: 200 100% 80%;
+  --card: 200 100% 4%;
+  --card-foreground: 200 100% 80%;
+  --primary: 200 100% 50%;
+  --primary-foreground: 200 100% 5%;
+  --secondary: 200 50% 15%;
+  --secondary-foreground: 200 100% 80%;
+  --muted: 200 50% 8%;
+  --muted-foreground: 200 50% 60%;
+  --accent: 200 100% 40%;
+  --accent-foreground: 200 100% 5%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 200 100% 5%;
+  --border: 200 50% 20%;
+  --input: 200 50% 8%;
+  --ring: 200 100% 50%;
+}
+
+:root[data-theme="amber"] {
+  --background: 45 100% 3%;
+  --foreground: 45 100% 80%;
+  --card: 45 100% 4%;
+  --card-foreground: 45 100% 80%;
+  --primary: 45 100% 50%;
+  --primary-foreground: 45 100% 5%;
+  --secondary: 45 50% 15%;
+  --secondary-foreground: 45 100% 80%;
+  --muted: 45 50% 8%;
+  --muted-foreground: 45 50% 60%;
+  --accent: 45 100% 40%;
+  --accent-foreground: 45 100% 5%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 45 100% 5%;
+  --border: 45 50% 20%;
+  --input: 45 50% 8%;
+  --ring: 45 100% 50%;
+}
+
+:root[data-theme="purple"] {
+  --background: 270 100% 3%;
+  --foreground: 270 100% 80%;
+  --card: 270 100% 4%;
+  --card-foreground: 270 100% 80%;
+  --primary: 270 100% 50%;
+  --primary-foreground: 270 100% 5%;
+  --secondary: 270 50% 15%;
+  --secondary-foreground: 270 100% 80%;
+  --muted: 270 50% 8%;
+  --muted-foreground: 270 50% 60%;
+  --accent: 270 100% 40%;
+  --accent-foreground: 270 100% 5%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 270 100% 5%;
+  --border: 270 50% 20%;
+  --input: 270 50% 8%;
+  --ring: 270 100% 50%;
+}
+
+:root[data-theme="red"] {
+  --background: 0 100% 3%;
+  --foreground: 0 100% 80%;
+  --card: 0 100% 4%;
+  --card-foreground: 0 100% 80%;
+  --primary: 0 100% 50%;
+  --primary-foreground: 0 100% 5%;
+  --secondary: 0 50% 15%;
+  --secondary-foreground: 0 100% 80%;
+  --muted: 0 50% 8%;
+  --muted-foreground: 0 50% 60%;
+  --accent: 0 100% 40%;
+  --accent-foreground: 0 100% 5%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 100% 5%;
+  --border: 0 50% 20%;
+  --input: 0 50% 8%;
+  --ring: 0 100% 50%;
+}
+
+/* Matrix rain animation */
+@keyframes matrixRain {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+#matrix-rain,
+#matrix-rain-2,
+#matrix-rain-3,
+#matrix-rain-4 {
+  animation: matrixRain 2s linear infinite;
+}
+
+#matrix-rain-2 {
+  animation-delay: 0.5s;
+}
+
+#matrix-rain-3 {
+  animation-delay: 1s;
+}
+
+#matrix-rain-4 {
+  animation-delay: 1.5s;
 }

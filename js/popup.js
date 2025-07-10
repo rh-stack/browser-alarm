@@ -1,18 +1,19 @@
-// Storage keys
-const STORAGE_KEYS = {
-  ALARMS: 'alarms',
-  TIMERS: 'timers'
-};
+// Shared constants and utilities are loaded via script tags
+// STORAGE_KEYS, MESSAGE_TYPES, UI_CONSTANTS, ANIMATION_INTERVALS, ASCII_DIMENSIONS available from constants.js
+// formatDuration, getTimeUntilAlarm, formatCurrentTime, isValidTime, generateId, getDefaultAlarmTime, isValidLabel available from utils.js
 
 // DOM elements
 let currentTimeEl, systemUptimeEl, activeCountEl;
 let alarmsCountEl, timersCountEl, alarmsListEl, timersListEl;
 let newAlarmTimeEl, newAlarmLabelEl, addAlarmBtnEl;
 let newTimerMinutesEl, newTimerLabelEl, addTimerBtnEl;
+let settingsBtnEl, backBtnEl, mainScreenEl, settingsScreenEl;
+let headerPromptEl;
 
 // State
 let alarms = [];
 let timers = [];
+let currentTheme = 'green';
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
@@ -41,6 +42,13 @@ function initializeElements() {
   newTimerLabelEl = document.getElementById('new-timer-label');
   addTimerBtnEl = document.getElementById('add-timer-btn');
 
+  // Navigation elements
+  settingsBtnEl = document.getElementById('settings-btn');
+  backBtnEl = document.getElementById('back-btn');
+  mainScreenEl = document.getElementById('main-screen');
+  settingsScreenEl = document.getElementById('settings-screen');
+  headerPromptEl = document.getElementById('header-prompt');
+
   // Initialize ASCII art dynamic elements
   initializeAsciiElements();
 }
@@ -51,12 +59,25 @@ function initializeAsciiElements() {
   startProgressBarAnimation();
   startActivityScan();
   startSidePanelAnimations();
+  startMatrixRainAnimation();
   updateStatusMessage('System ready');
 }
 
 function setupEventListeners() {
   addAlarmBtnEl.addEventListener('click', addAlarm);
   addTimerBtnEl.addEventListener('click', addTimer);
+
+  // Navigation listeners
+  settingsBtnEl.addEventListener('click', showSettings);
+  backBtnEl.addEventListener('click', showMain);
+
+  // Color theme listeners
+  document.querySelectorAll('.color-option').forEach(option => {
+    option.addEventListener('click', (e) => {
+      const theme = option.dataset.theme;
+      changeTheme(theme);
+    });
+  });
 
   // Time input mask for alarm time
   newAlarmTimeEl.addEventListener('input', handleTimeInputMask);
@@ -78,30 +99,36 @@ function setupEventListeners() {
 
 async function loadData() {
   try {
-    const result = await chrome.storage.local.get([STORAGE_KEYS.ALARMS, STORAGE_KEYS.TIMERS]);
-    alarms = result[STORAGE_KEYS.ALARMS] || [];
-    timers = result[STORAGE_KEYS.TIMERS] || [];
+    const result = await chrome.storage.local.get([
+      window.STORAGE_KEYS.ALARMS, 
+      window.STORAGE_KEYS.TIMERS,
+      window.STORAGE_KEYS.THEME
+    ]);
+    alarms = result[window.STORAGE_KEYS.ALARMS] || [];
+    timers = result[window.STORAGE_KEYS.TIMERS] || [];
+    currentTheme = result[window.STORAGE_KEYS.THEME] || 'green';
+    
+    // Apply saved theme
+    applyTheme(currentTheme);
   } catch (error) {
     console.error('Error loading data:', error);
     alarms = [];
     timers = [];
+    currentTheme = 'green';
   }
 }
 
+/**
+ * Sets the default alarm time to current time + 1 hour
+ */
 function setDefaultAlarmTime() {
-  const now = new Date();
-  now.setHours(now.getHours() + 1);
-
-  if (now.getHours() >= 24) {
-    now.setHours(23);
-    now.setMinutes(59);
-  }
-
-  const timeString = now.toTimeString().slice(0, 5);
-  newAlarmTimeEl.value = timeString;
+  newAlarmTimeEl.value = window.getDefaultAlarmTime();
 }
 
-// Time input mask functions
+/**
+ * Handles time input formatting and validation
+ * @param {Event} e - Input event
+ */
 function handleTimeInputMask(e) {
   let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
   
@@ -131,6 +158,10 @@ function handleTimeInputMask(e) {
   e.target.value = value;
 }
 
+/**
+ * Handles keydown events for time input to allow only valid keys
+ * @param {KeyboardEvent} e - Keydown event
+ */
 function handleTimeInputKeydown(e) {
   const allowedKeys = [
     'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
@@ -147,18 +178,25 @@ function handleTimeInputKeydown(e) {
   e.preventDefault();
 }
 
-// Timer input mask functions
+/**
+ * Handles timer input formatting to allow only numbers
+ * @param {Event} e - Input event
+ */
 function handleTimerInputMask(e) {
   let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
   
   // Limit to reasonable timer values (999 minutes max)
-  if (parseInt(value) > 999) {
-    value = '999';
+  if (parseInt(value) > window.UI_CONSTANTS.MAX_TIMER_MINUTES) {
+    value = window.UI_CONSTANTS.MAX_TIMER_MINUTES.toString();
   }
   
   e.target.value = value;
 }
 
+/**
+ * Handles keydown events for timer input to allow only valid keys
+ * @param {KeyboardEvent} e - Keydown event
+ */
 function handleTimerInputKeydown(e) {
   const allowedKeys = [
     'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
@@ -175,22 +213,23 @@ function handleTimerInputKeydown(e) {
   e.preventDefault();
 }
 
+/**
+ * Starts time and UI updates with consistent intervals
+ */
 function startTimeUpdates() {
   updateTime();
   updateUI(); // Ensure UI updates immediately
   setInterval(() => {
     updateTime();
     updateUI(); // Update UI every second for real-time countdowns
-  }, 1000);
+  }, window.window.ANIMATION_INTERVALS.TIME_UPDATE);
 }
 
+/**
+ * Updates the current time display
+ */
 function updateTime() {
-  const now = new Date();
-  // Format: DD/MM/YYYY HH:MM:SS
-  const pad = n => n.toString().padStart(2, '0');
-  const dateStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
-  const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-  currentTimeEl.textContent = `${dateStr} ${timeStr}`;
+  currentTimeEl.textContent = window.formatCurrentTime();
 }
 
 function updateUI() {
@@ -267,7 +306,7 @@ function renderTimers() {
 }
 
 function createAlarmHTML(alarm) {
-  const timeLeft = getTimeUntilAlarm(alarm.time, true);
+  const timeLeft = window.getTimeUntilAlarm(alarm.time, true);
   return `
     <div class="list-item">
       <div class="item-content">
@@ -289,7 +328,7 @@ function createAlarmHTML(alarm) {
 
 function createTimerHTML(timer) {
   const remaining = Math.max(0, timer.endTime - Date.now());
-  const remainingFormatted = formatDuration(remaining, true);
+  const remainingFormatted = window.formatDuration(remaining, true);
   return `
     <div class="list-item">
       <div class="item-content">
@@ -308,9 +347,16 @@ function createTimerHTML(timer) {
 
 
 
+/**
+ * Shows an error message to the user
+ * @param {string} msg - Error message to display
+ */
 function showError(msg) {
   const el = document.getElementById('error-message');
-  if (!el) return;
+  if (!el) {
+    console.error('Error element not found:', msg);
+    return;
+  }
   el.textContent = msg;
   el.style.display = 'block';
   setTimeout(() => {
@@ -319,161 +365,156 @@ function showError(msg) {
   }, 2500);
 }
 
+/**
+ * Adds a new alarm with validation
+ */
 async function addAlarm() {
   const time = newAlarmTimeEl.value;
   const label = newAlarmLabelEl.value.trim() || 'alarm'; // Default label
-  if (!time) {
-    showError('Please enter time');
+  
+  // Validation
+  if (!time || !window.isValidTime(time)) {
+    showError('Please enter a valid time (HH:MM)');
     return;
   }
-  if (label.length > 25) {
-    showError('Label must be 25 characters or less.');
+  
+  if (!window.isValidLabel(label, window.UI_CONSTANTS.MAX_LABEL_LENGTH)) {
+    showError(`Label must be ${window.UI_CONSTANTS.MAX_LABEL_LENGTH} characters or less.`);
     return;
   }
+  
   const alarm = {
-    id: Date.now().toString(),
+    id: window.generateId(),
     time: time,
     label: label
   };
+  
   alarms.push(alarm);
   await saveAlarms();
+  
   // Schedule alarm
   chrome.runtime.sendMessage({
-    type: 'scheduleAlarm',
+    type: window.MESSAGE_TYPES.SCHEDULE_ALARM,
     alarm: alarm
   });
+  
+  // Reset form
   newAlarmTimeEl.value = '';
   newAlarmLabelEl.value = '';
   setDefaultAlarmTime();
   updateUI();
 }
 
+/**
+ * Adds a new timer with validation
+ */
 async function addTimer() {
   const minutes = parseInt(newTimerMinutesEl.value) || 0;
   const label = newTimerLabelEl.value.trim() || 'timer'; // Default label
+  
+  // Validation
   if (minutes === 0) {
     showError('Please enter duration');
     return;
   }
-  if (label.length > 25) {
-    showError('Label must be 25 characters or less.');
+  
+  if (!window.isValidLabel(label, window.UI_CONSTANTS.MAX_LABEL_LENGTH)) {
+    showError(`Label must be ${window.UI_CONSTANTS.MAX_LABEL_LENGTH} characters or less.`);
     return;
   }
+  
   const durationMs = minutes * 60 * 1000;
-  if (durationMs < 30000) {
+  if (durationMs < window.UI_CONSTANTS.MIN_TIMER_DURATION_MS) {
     showError('Minimum timer duration is 30 seconds.');
     return;
   }
+  
   const timer = {
-    id: Date.now().toString(),
+    id: window.generateId(),
     durationMs: durationMs,
     endTime: Date.now() + durationMs,
     label: label
   };
+  
   timers.push(timer);
   await saveTimers();
+  
   // Schedule timer
   chrome.runtime.sendMessage({
-    type: 'scheduleTimer',
+    type: window.MESSAGE_TYPES.SCHEDULE_TIMER,
     timer: timer
   });
+  
+  // Reset form
   newTimerMinutesEl.value = '';
   newTimerLabelEl.value = '';
   updateUI();
 }
 
+/**
+ * Deletes an alarm by ID
+ * @param {string} id - Alarm ID to delete
+ */
 async function deleteAlarm(id) {
   alarms = alarms.filter(alarm => alarm.id !== id);
   await saveAlarms();
 
   chrome.runtime.sendMessage({
-    type: 'clearAlarm',
+    type: window.MESSAGE_TYPES.CLEAR_ALARM,
     id: id
   });
 
   updateUI();
 }
 
+/**
+ * Deletes a timer by ID
+ * @param {string} id - Timer ID to delete
+ */
 async function deleteTimer(id) {
   timers = timers.filter(timer => timer.id !== id);
   await saveTimers();
 
   chrome.runtime.sendMessage({
-    type: 'clearTimer',
+    type: window.MESSAGE_TYPES.CLEAR_TIMER,
     id: id
   });
 
   updateUI();
 }
 
+/**
+ * Saves alarms to Chrome storage with error handling
+ */
 async function saveAlarms() {
   try {
-    await chrome.storage.local.set({ [STORAGE_KEYS.ALARMS]: alarms });
+    await chrome.storage.local.set({ [window.STORAGE_KEYS.ALARMS]: alarms });
   } catch (error) {
     console.error('Error saving alarms:', error);
+    showError('Failed to save alarm. Please try again.');
   }
 }
 
+/**
+ * Saves timers to Chrome storage with error handling
+ */
 async function saveTimers() {
   try {
-    await chrome.storage.local.set({ [STORAGE_KEYS.TIMERS]: timers });
+    await chrome.storage.local.set({ [window.STORAGE_KEYS.TIMERS]: timers });
   } catch (error) {
     console.error('Error saving timers:', error);
+    showError('Failed to save timer. Please try again.');
   }
 }
 
-function getTimeUntilAlarm(timeString, showSeconds = false) {
-  const now = new Date();
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const alarmTime = new Date();
-  alarmTime.setHours(hours, minutes, 0, 0);
-  if (alarmTime <= now) {
-    alarmTime.setDate(alarmTime.getDate() + 1);
-  }
-  const diff = alarmTime - now;
-  const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
-  const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
-  if (showSeconds) {
-    if (hoursLeft > 0) {
-      return `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`;
-    } else if (minutesLeft > 0) {
-      return `${minutesLeft}m ${secondsLeft}s`;
-    } else {
-      return `${secondsLeft}s`;
-    }
-  } else {
-    if (hoursLeft > 0) {
-      return `${hoursLeft}h ${minutesLeft}m`;
-    } else {
-      return `${minutesLeft}m`;
-    }
-  }
-}
+// Removed duplicate getTimeUntilAlarm function - now imported from utils.js
 
-function formatDuration(ms, showSeconds = false) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  if (showSeconds) {
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${seconds}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds}s`;
-    } else {
-      return `${seconds}s`;
-    }
-  } else {
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    } else {
-      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-  }
-}
+// Removed duplicate formatDuration function - now imported from utils.js
 
 // ASCII Art Animation Functions
+/**
+ * Starts the rotating system indicator animation
+ */
 function startSystemIndicatorRotation() {
   const indicators = ['◐', '◑', '◒', '◓'];
   let currentIndex = 0;
@@ -484,9 +525,12 @@ function startSystemIndicatorRotation() {
       indicatorEl.textContent = indicators[currentIndex];
       currentIndex = (currentIndex + 1) % indicators.length;
     }
-  }, 500);
+  }, window.ANIMATION_INTERVALS.SYSTEM_INDICATOR);
 }
 
+/**
+ * Starts the progress bar shimmer animation
+ */
 function startProgressBarAnimation() {
   const chars = ['▓', '▒', '░'];
   let shimmerPosition = 0;
@@ -494,7 +538,7 @@ function startProgressBarAnimation() {
   setInterval(() => {
     const progressBar = document.getElementById('progress-bar');
     if (progressBar) {
-      const totalChars = 38; // Back to main panel size
+      const totalChars = window.ASCII_DIMENSIONS.MAIN_PANEL_CHARS;
       let bar = '';
       
       for (let i = 0; i < totalChars; i++) {
@@ -511,9 +555,12 @@ function startProgressBarAnimation() {
       progressBar.textContent = bar;
       shimmerPosition = (shimmerPosition + 1) % totalChars;
     }
-  }, 100);
+  }, window.ANIMATION_INTERVALS.PROGRESS_BAR);
 }
 
+/**
+ * Starts the activity scanning animation
+ */
 function startActivityScan() {
   const patterns = [
     '░░░░░░░░░░░░░░░░░░░░░░░░░░', // 26 chars for main panel
@@ -555,7 +602,7 @@ function startActivityScan() {
       activityIndicator.textContent = patterns[currentPattern];
       currentPattern = (currentPattern + 1) % patterns.length;
     }
-  }, 150);
+  }, window.ANIMATION_INTERVALS.ACTIVITY_SCAN);
 }
 
 function startSidePanelAnimations() {
@@ -567,6 +614,9 @@ function startSidePanelAnimations() {
   startActivityLog();
 }
 
+/**
+ * Starts the uptime bar animation
+ */
 function startUptimeAnimation() {
   const uptimePatterns = ['████', '███░', '██░░', '█░░░', '░░░░', '█░░░', '██░░', '███░'];
   let currentUptime = 0;
@@ -577,9 +627,12 @@ function startUptimeAnimation() {
       uptimeBar.textContent = uptimePatterns[currentUptime];
       currentUptime = (currentUptime + 1) % uptimePatterns.length;
     }
-  }, 800);
+  }, window.ANIMATION_INTERVALS.UPTIME);
 }
 
+/**
+ * Starts the resource monitoring animation
+ */
 function startResourceMonitoring() {
   const cpuPatterns = ['█░░░', '██░░', '███░', '████', '███░', '██░░'];
   const memPatterns = ['██░░', '███░', '████', '███░', '██░░', '█░░░'];
@@ -599,9 +652,12 @@ function startResourceMonitoring() {
       memIndicator.textContent = memPatterns[memIndex];
       memIndex = (memIndex + 1) % memPatterns.length;
     }
-  }, 1200);
+  }, window.ANIMATION_INTERVALS.RESOURCE_MONITOR);
 }
 
+/**
+ * Starts the activity log animation
+ */
 function startActivityLog() {
   const logPatterns = [
     ['█████', '███░░', '░░░░░'],
@@ -626,7 +682,7 @@ function startActivityLog() {
       logLine3.textContent = currentLog[2];
       logIndex = (logIndex + 1) % logPatterns.length;
     }
-  }, 2000);
+  }, window.ANIMATION_INTERVALS.ACTIVITY_LOG);
 }
 
 function updateStatusMessage(message) {
@@ -636,16 +692,24 @@ function updateStatusMessage(message) {
   }
 }
 
+/**
+ * Updates the progress bar display
+ * @param {number} progress - Progress value between 0 and 1
+ */
 function updateProgressBar(progress) {
   const progressBar = document.getElementById('progress-bar');
   if (progressBar) {
-    const totalChars = 38; // Back to original main panel size
+    const totalChars = window.ASCII_DIMENSIONS.MAIN_PANEL_CHARS;
     const filledChars = Math.floor(progress * totalChars);
     const bar = '█'.repeat(filledChars) + '▓'.repeat(totalChars - filledChars);
     progressBar.textContent = bar;
   }
 }
 
+/**
+ * Updates the activity indicator animation state
+ * @param {boolean} active - Whether to show active animation
+ */
 function updateActivityIndicator(active) {
   const activityIndicator = document.getElementById('activity-indicator');
   if (activityIndicator) {
@@ -653,9 +717,116 @@ function updateActivityIndicator(active) {
       activityIndicator.style.animation = 'activityScan 1.5s ease-in-out infinite';
     } else {
       activityIndicator.style.animation = 'none';
-      activityIndicator.textContent = '░░░░░░░░░░░░░░░░░░░░░░░░░░'; // 26 characters for main panel
+      activityIndicator.textContent = '░'.repeat(window.ASCII_DIMENSIONS.ACTIVITY_INDICATOR_CHARS);
     }
   }
+}
+
+// Navigation Functions
+/**
+ * Shows the settings screen
+ */
+function showSettings() {
+  mainScreenEl.style.display = 'none';
+  settingsScreenEl.style.display = 'block';
+  
+  // Update header for settings
+  headerPromptEl.textContent = '┌─[settings@config]─[~]';
+  backBtnEl.style.display = 'flex';
+  settingsBtnEl.style.display = 'none';
+  
+  updateActiveThemeIndicator();
+}
+
+/**
+ * Shows the main screen
+ */
+function showMain() {
+  settingsScreenEl.style.display = 'none';
+  mainScreenEl.style.display = 'block';
+  
+  // Update header for main screen
+  headerPromptEl.textContent = '┌─[alarm@timer]─[~]';
+  backBtnEl.style.display = 'none';
+  settingsBtnEl.style.display = 'flex';
+}
+
+// Theme Functions
+/**
+ * Changes the app theme
+ * @param {string} theme - Theme name ('green', 'blue', 'amber', 'purple', 'red')
+ */
+async function changeTheme(theme) {
+  currentTheme = theme;
+  applyTheme(theme);
+  updateActiveThemeIndicator();
+  
+  // Save theme to storage
+  try {
+    await chrome.storage.local.set({ [window.STORAGE_KEYS.THEME]: theme });
+  } catch (error) {
+    console.error('Error saving theme:', error);
+  }
+}
+
+/**
+ * Applies the theme to the document
+ * @param {string} theme - Theme name
+ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+}
+
+/**
+ * Updates the active theme indicator in settings
+ */
+function updateActiveThemeIndicator() {
+  document.querySelectorAll('.color-option').forEach(option => {
+    if (option.dataset.theme === currentTheme) {
+      option.classList.add('active');
+    } else {
+      option.classList.remove('active');
+    }
+  });
+}
+
+// Matrix Rain Animation
+/**
+ * Starts the matrix-style falling characters animation
+ */
+function startMatrixRainAnimation() {
+  const matrixChars = ['0', '1', '█', '▓', '▒', '░', '◆', '◇', '▲', '▼', '◀', '▶'];
+  const rainElements = [
+    document.getElementById('matrix-rain'),
+    document.getElementById('matrix-rain-2'),
+    document.getElementById('matrix-rain-3'),
+    document.getElementById('matrix-rain-4')
+  ];
+  
+  // Generate different patterns for each line
+  const patterns = rainElements.map(() => generateMatrixPattern());
+  
+  function updateMatrixRain() {
+    rainElements.forEach((element, index) => {
+      if (element) {
+        // Shift pattern and add new character at the beginning
+        patterns[index] = [getRandomMatrixChar()].concat(patterns[index].slice(0, -1));
+        element.textContent = patterns[index].join('');
+      }
+    });
+  }
+  
+  function generateMatrixPattern() {
+    const patternLength = 55;
+    return Array(patternLength).fill().map(() => getRandomMatrixChar());
+  }
+  
+  function getRandomMatrixChar() {
+    return matrixChars[Math.floor(Math.random() * matrixChars.length)];
+  }
+  
+  // Start the animation
+  setInterval(updateMatrixRain, window.ANIMATION_INTERVALS.MATRIX_RAIN);
 }
 
 // Make functions global for onclick handlers

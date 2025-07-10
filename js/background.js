@@ -1,8 +1,47 @@
-// Storage keys
+// Shared constants - duplicated here since service workers can't easily share modules
 const STORAGE_KEYS = {
   ALARMS: 'alarms',
   TIMERS: 'timers'
 };
+
+const MESSAGE_TYPES = {
+  SCHEDULE_ALARM: 'scheduleAlarm',
+  CLEAR_ALARM: 'clearAlarm',
+  SCHEDULE_TIMER: 'scheduleTimer',
+  CLEAR_TIMER: 'clearTimer'
+};
+
+const NAME_PREFIXES = {
+  ALARM: 'alarm-',
+  TIMER: 'timer-'
+};
+
+/**
+ * Formats a duration in milliseconds to a human-readable string
+ * @param {number} ms - Duration in milliseconds
+ * @returns {string} Formatted duration string
+ */
+function formatDuration(ms) {
+  const totalMinutes = Math.floor(ms / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else {
+    return `${minutes}m`;
+  }
+}
+
+/**
+ * Safely encodes a string for URL parameters
+ * @param {string} str - String to encode
+ * @returns {string} URL-encoded string
+ */
+function safeEncodeURIComponent(str) {
+  if (!str || typeof str !== 'string') return '';
+  return encodeURIComponent(str);
+}
 
 // Initialize service worker
 chrome.runtime.onInstalled.addListener(async () => {
@@ -18,18 +57,20 @@ chrome.runtime.onStartup.addListener(async () => {
 // Message handling from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
-    case 'scheduleAlarm':
+    case MESSAGE_TYPES.SCHEDULE_ALARM:
       scheduleAlarm(message.alarm);
       break;
-    case 'clearAlarm':
+    case MESSAGE_TYPES.CLEAR_ALARM:
       clearAlarm(message.id);
       break;
-    case 'scheduleTimer':
+    case MESSAGE_TYPES.SCHEDULE_TIMER:
       scheduleTimer(message.timer);
       break;
-    case 'clearTimer':
+    case MESSAGE_TYPES.CLEAR_TIMER:
       clearTimer(message.id);
       break;
+    default:
+      console.warn('Unknown message type:', message.type);
   }
 });
 
@@ -37,15 +78,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   console.log('Alarm fired:', alarm.name);
   
-  if (alarm.name.startsWith('alarm-')) {
+  if (alarm.name.startsWith(NAME_PREFIXES.ALARM)) {
     await handleAlarmFired(alarm.name);
-  } else if (alarm.name.startsWith('timer-')) {
+  } else if (alarm.name.startsWith(NAME_PREFIXES.TIMER)) {
     await handleTimerFired(alarm.name);
   }
 });
 
+/**
+ * Schedules a Chrome alarm for the given alarm object
+ * @param {Object} alarm - Alarm configuration object
+ * @param {string} alarm.id - Unique alarm identifier
+ * @param {string} alarm.time - Time in HH:MM format
+ */
 async function scheduleAlarm(alarm) {
-  const alarmName = `alarm-${alarm.id}`;
+  const alarmName = `${NAME_PREFIXES.ALARM}${alarm.id}`;
   const [hours, minutes] = alarm.time.split(':').map(Number);
   
   const now = new Date();
@@ -67,8 +114,14 @@ async function scheduleAlarm(alarm) {
   }
 }
 
+/**
+ * Schedules a Chrome alarm for the given timer object
+ * @param {Object} timer - Timer configuration object
+ * @param {string} timer.id - Unique timer identifier
+ * @param {number} timer.endTime - End time as timestamp
+ */
 async function scheduleTimer(timer) {
-  const timerName = `timer-${timer.id}`;
+  const timerName = `${NAME_PREFIXES.TIMER}${timer.id}`;
   
   try {
     await chrome.alarms.create(timerName, {
@@ -80,8 +133,12 @@ async function scheduleTimer(timer) {
   }
 }
 
+/**
+ * Clears a Chrome alarm by ID
+ * @param {string} id - Alarm identifier
+ */
 async function clearAlarm(id) {
-  const alarmName = `alarm-${id}`;
+  const alarmName = `${NAME_PREFIXES.ALARM}${id}`;
   try {
     await chrome.alarms.clear(alarmName);
     console.log(`Cleared alarm ${alarmName}`);
@@ -90,8 +147,12 @@ async function clearAlarm(id) {
   }
 }
 
+/**
+ * Clears a Chrome timer by ID
+ * @param {string} id - Timer identifier
+ */
 async function clearTimer(id) {
-  const timerName = `timer-${id}`;
+  const timerName = `${NAME_PREFIXES.TIMER}${id}`;
   try {
     await chrome.alarms.clear(timerName);
     console.log(`Cleared timer ${timerName}`);
@@ -100,8 +161,12 @@ async function clearTimer(id) {
   }
 }
 
+/**
+ * Handles alarm fired event and opens notification tab
+ * @param {string} alarmName - Name of the fired alarm
+ */
 async function handleAlarmFired(alarmName) {
-  const id = alarmName.replace('alarm-', '');
+  const id = alarmName.replace(NAME_PREFIXES.ALARM, '');
   
   // Get alarm details from storage
   const result = await chrome.storage.local.get([STORAGE_KEYS.ALARMS]);
@@ -110,16 +175,21 @@ async function handleAlarmFired(alarmName) {
   
   if (alarm) {
     // Open notification tab
-    const url = chrome.runtime.getURL(`alarm.html?id=${id}&time=${alarm.time}&label=${encodeURIComponent(alarm.label)}`);
+    const url = chrome.runtime.getURL(`alarm.html?id=${id}&time=${alarm.time}&label=${safeEncodeURIComponent(alarm.label)}`);
     await chrome.tabs.create({ url });
+    
     // Remove alarm from storage
     const updatedAlarms = alarms.filter(a => a.id !== id);
     await chrome.storage.local.set({ [STORAGE_KEYS.ALARMS]: updatedAlarms });
   }
 }
 
+/**
+ * Handles timer fired event and opens notification tab
+ * @param {string} timerName - Name of the fired timer
+ */
 async function handleTimerFired(timerName) {
-  const id = timerName.replace('timer-', '');
+  const id = timerName.replace(NAME_PREFIXES.TIMER, '');
   
   // Get timer details from storage
   const result = await chrome.storage.local.get([STORAGE_KEYS.TIMERS]);
@@ -129,14 +199,18 @@ async function handleTimerFired(timerName) {
   if (timer) {
     const duration = formatDuration(timer.durationMs);
     // Open notification tab
-    const url = chrome.runtime.getURL(`timer.html?id=${id}&duration=${encodeURIComponent(duration)}&label=${encodeURIComponent(timer.label)}`);
+    const url = chrome.runtime.getURL(`timer.html?id=${id}&duration=${safeEncodeURIComponent(duration)}&label=${safeEncodeURIComponent(timer.label)}`);
     await chrome.tabs.create({ url });
+    
     // Remove timer from storage
     const updatedTimers = timers.filter(t => t.id !== id);
     await chrome.storage.local.set({ [STORAGE_KEYS.TIMERS]: updatedTimers });
   }
 }
 
+/**
+ * Re-schedules all active alarms and timers after browser restart
+ */
 async function rehydrateAlarms() {
   try {
     const result = await chrome.storage.local.get([STORAGE_KEYS.ALARMS, STORAGE_KEYS.TIMERS]);
@@ -145,7 +219,7 @@ async function rehydrateAlarms() {
     
     // Re-schedule all active alarms
     for (const alarm of alarms) {
-      if (alarm.enabled) {
+      if (alarm.enabled !== false) { // Default to enabled if not specified
         await scheduleAlarm(alarm);
       }
     }
@@ -153,7 +227,7 @@ async function rehydrateAlarms() {
     // Re-schedule all active timers that haven't expired
     const now = Date.now();
     for (const timer of timers) {
-      if (timer.enabled && timer.endTime > now) {
+      if (timer.enabled !== false && timer.endTime > now) { // Default to enabled if not specified
         await scheduleTimer(timer);
       }
     }
@@ -161,17 +235,5 @@ async function rehydrateAlarms() {
     console.log('Rehydrated alarms and timers');
   } catch (error) {
     console.error('Error rehydrating alarms:', error);
-  }
-}
-
-function formatDuration(ms) {
-  const totalMinutes = Math.floor(ms / (1000 * 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
   }
 }
