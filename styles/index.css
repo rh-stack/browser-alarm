@@ -21,7 +21,27 @@ body::-webkit-scrollbar,
 .terminal-container::-webkit-scrollbar {
   display: none;
 }
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600&display=swap');
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../fonts/JetBrainsMono-Regular.ttf') format('ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../fonts/JetBrainsMono-Medium.ttf') format('ttf');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Source Code Pro';
+  src: url('../fonts/SourceCodePro-Regular.ttf') format('ttf');
+  font-weight: 400;
+  font-style: normal;
+}
 
 /* Prevent theme flash on load */
 body.alarm-page, body.timer-page {

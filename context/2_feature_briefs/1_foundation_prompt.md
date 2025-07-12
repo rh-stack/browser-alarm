@@ -42,6 +42,9 @@ Below is the initial list of user stories.
 
 https://www.ascii-code.com/
 https://theasciicode.com.ar/
+https://patorjk.com/software/taag/#p=display&f=ANSI%20Shadow&t=Alarms%20and%20Timers
+/* @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600&display=swap'); */
+
 
 Matrix Digital Rain Animation
 Option 1: Classic Matrix-style with Japanese katakana and numbers
@@ -94,31 +97,48 @@ ASCII Clock - Terminal Style Alarms & Timers
 Retro terminal-style alarm and timer extension with animated ASCII art interface. Perfect for developers and terminal enthusiasts.
 
 ### Detailed Description:
-ASCII Clock brings the nostalgic charm of terminal computing to your browser with a fully functional alarm and timer system.
+ASCII Clock brings the nostalgic charm of terminal computing to your browser with a simple but functional alarm and timer system.
 
 🖥️ FEATURES:
-• Terminal-inspired ASCII art interface
-• Multiple alarms and timers
-• Animated progress bars and status indicators
-• Retro green-on-black terminal theme
-• Lightweight and fast
-• Works offline
+- Terminal-inspired ASCII art interface
+- Multiple alarms and timers limited to today
+- Retro green-on-black terminal theme
+- Five color themes
+- Lightweight and fast
+- Works offline
 
-⚡ PERFECT FOR:
-• Developers who love terminal aesthetics
-• Retro computing enthusiasts
-• Anyone who wants a unique, distraction-free timer
-• Pomodoro technique practitioners
-• Study sessions and work breaks
-
-🎨 INTERFACE:
-Experience a beautifully crafted ASCII art dashboard with:
-• Real-time animated progress indicators
-• System status monitoring display
-• Scanning effects and pulsing indicators
-• Monospace font perfection
+✔️ PERFECT FOR:
+- Pomodoro technique practitioners
+- Study sessions and work breaks
+- Developers who love terminal aesthetics
+- Retro computing enthusiasts
+- Anyone who wants a unique, distraction-free timer
 
 Transform your productivity with the nostalgic power of terminal-style time management. Simple pure retro functionality without bloat.
 
-### Keywords:
+Keywords:
 alarm, timer, terminal, ASCII, retro, developer, productivity, pomodoro, vintage, monospace
+
+### Privacy policy page in Chrome Web Store
+
+Single Purpose
+ASCII Clock - Terminal Style Alarms & Timers has a single, focused purpose: to provide users with retro terminal-style alarm and timer functionality. The extension creates and manages time-based alerts with an animated ASCII art interface, designed specifically for developers and terminal enthusiasts who want a nostalgic, text-based timing solution.
+
+Alarms justification
+The alarms permission is essential for the core functionality of this extension. It allows the extension to:
+- Schedule and trigger alarm notifications at user-specified times
+- Create countdown timers that alert users when time expires
+- Provide reliable time-based notifications even when the browser is minimized
+
+Storage justification
+The storage permission is used to:
+- Save user's alarm and timer configurations locally
+- Remember user preferences for ASCII art styles and terminal themes
+- Maintain extension settings between browser sessions without requiring re-configuration
+
+Tabs justification
+The tabs permission enables the extension to:
+- Open a dedicated alarm/timer tab when alarms trigger
+- Provide better alarm visibility by bringing the browser window to focus
+
+Privacy Note: This extension operates entirely locally on your device. No personal data, browsing history, or usage patterns are collected, transmitted, or stored remotely. All alarm and timer data remains on your local machine.

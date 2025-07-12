@@ -1,13 +1,12 @@
 {
   "manifest_version": 3,
   "name": "ASCII Clock - Terminal Style Alarms & Timers",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "description": "Retro terminal-style alarm and timer extension with animated ASCII art interface. Perfect for developers and terminal enthusiasts.",
   "permissions": [
     "alarms",
     "storage",
-    "tabs",
-    "activeTab"
+    "tabs"
   ],
   "background": {
     "service_worker": "js/background.js"
