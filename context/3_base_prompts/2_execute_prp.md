@@ -1,6 +1,6 @@
 ## Task
 
-1. Learn the Project Requirement Prompt (PRP) from the file: [alarm-timer-core-feature.md](../4_prp/alarm-timer-core-feature.md)
+1. Learn the Project Requirement Prompt (PRP) from the file: [12-hour-time-input-enhancement.md](../4_prp/12-hour-time-input-enhancement.md)
 2. Implement a feature described in this file.
 
 ## Execution Process

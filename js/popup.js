@@ -104,7 +104,7 @@ function setupEventListeners() {
     donateButton.addEventListener('click', (e) => {
       e.preventDefault();
       chrome.tabs.create({ 
-        url: 'https://www.buymeacoffee.com/asciiclock' 
+        url: window.EXTERNAL_LINKS.DONATE_URL
       });
     });
   }
@@ -158,98 +158,185 @@ function setDefaultAlarmTime() {
 }
 
 /**
+ * Parses time input and returns formatted 12-hour time components
+ * @param {string} input - Raw input string
+ * @returns {object} Parsed time components
+ */
+function parseTimeInput12Hour(input) {
+  const cleanInput = input.toUpperCase().replace(/[^0-9APM:\s]/g, '');
+  
+  // Extract AM/PM
+  let ampm = '';
+  if (cleanInput.includes('AM')) ampm = 'AM';
+  else if (cleanInput.includes('PM')) ampm = 'PM';
+  else if (cleanInput.includes('A') && !cleanInput.includes('M')) ampm = 'AM';
+  else if (cleanInput.includes('P') && !cleanInput.includes('M')) ampm = 'PM';
+  
+  // Extract time part (remove AM/PM)
+  const timeOnly = cleanInput.replace(/\s*(AM|PM|A|P)\s*/g, '');
+  const allDigits = timeOnly.replace(/[^\d]/g, '');
+  const hasColon = timeOnly.includes(':');
+  
+  return { timeOnly, allDigits, hasColon, ampm };
+}
+
+/**
+ * Formats parsed time components into display format
+ * @param {object} parsed - Parsed time components
+ * @returns {string} Formatted time string
+ */
+function formatTime12Hour(parsed) {
+  const { timeOnly, allDigits, hasColon, ampm } = parsed;
+  
+  if (allDigits.length === 0) {
+    return '';
+  }
+  
+  let formattedTime = '';
+  
+  // Handle different input patterns
+  if (allDigits.length === 1) {
+    // Single digit: "1"
+    formattedTime = allDigits;
+  } else if (allDigits.length === 2) {
+    // Two digits: "12" or "13" 
+    const num = parseInt(allDigits);
+    if (num > 12 && !hasColon) {
+      // "13" -> "1:3" (forced formatting for invalid hour)
+      formattedTime = `${allDigits[0]}:${allDigits[1]}`;
+    } else if (!hasColon) {
+      // "12" -> "12:" (auto-colon insertion for AC4, regardless of AM/PM)
+      formattedTime = `${allDigits}:`;
+    } else {
+      // User manually typed colon, keep as is
+      formattedTime = allDigits;
+    }
+  } else if (allDigits.length === 3) {
+    // Three digits: "110" or "101"
+    if (ampm || hasColon) {
+      // User signaled completion with AM/PM or colon
+      const h = parseInt(allDigits[0]) || 12;
+      const m = Math.min(parseInt(allDigits.slice(1)), 59);
+      formattedTime = `${h}:${m.toString().padStart(2, '0')}`;
+    } else {
+      // Wait for more input - show digits as is
+      formattedTime = allDigits;
+    }
+  } else if (allDigits.length >= 4) {
+    // Four or more digits: "1010" or "0110"
+    let hours, minutes;
+    
+    if (allDigits[0] === '0') {
+      // Handle leading zero: "0110" -> hour=1, min=10
+      hours = parseInt(allDigits[1]) || 12;
+      minutes = parseInt(allDigits.slice(2, 4));
+    } else {
+      const firstTwo = parseInt(allDigits.slice(0, 2));
+      if (firstTwo > 12) {
+        // "1310" -> hour=1, min=31 (from digits 1,3,1,0)
+        hours = parseInt(allDigits[0]);
+        minutes = parseInt(allDigits.slice(1, 3));
+      } else {
+        // "1010" -> hour=10, min=10
+        hours = firstTwo;
+        minutes = parseInt(allDigits.slice(2, 4));
+      }
+    }
+    
+    // Validate and constrain values
+    if (hours === 0) hours = 12;
+    if (hours > 12) hours = 12;
+    if (minutes > 59) minutes = 59;
+    
+    formattedTime = `${hours}:${minutes.toString().padStart(2, '0')}`;
+  }
+  
+  // Handle manual colon input cases like "1:10p" or "01:1p"
+  if (hasColon) {
+    const parts = timeOnly.split(':');
+    const hourPart = parts[0].replace(/[^\d]/g, '');
+    const minutePart = parts[1] ? parts[1].replace(/[^\d]/g, '') : '';
+    
+    if (hourPart) {
+      let h = parseInt(hourPart);
+      if (h === 0) h = 12;
+      if (h > 12) h = 12;
+      
+      formattedTime = h.toString();
+      
+      if (parts.length > 1) { // Only add colon if user typed it
+        formattedTime += ':';
+        if (minutePart) {
+          const m = Math.min(parseInt(minutePart), 59);
+          formattedTime += m.toString().padStart(2, '0');
+        } else if (timeOnly.endsWith(':')) {
+          // User just typed colon, don't add minutes yet
+        }
+      }
+    }
+  }
+  
+  // Add AM/PM if present
+  if (formattedTime && ampm) {
+    formattedTime += ` ${ampm}`;
+  }
+  
+  return formattedTime;
+}
+
+/**
  * Handles time input formatting and validation
  * @param {Event} e - Input event
  */
 function handleTimeInputMask(e) {
   if (clockFormat === '12') {
-    // Handle 12-hour format with AM/PM
-    let value = e.target.value.toUpperCase();
-    
-    // Don't reformat if user is deleting (value is getting shorter)
+    const currentValue = e.target.value;
     const previousValue = e.target.getAttribute('data-prev-value') || '';
-    const isDeleting = value.length < previousValue.length;
+    const isDeleting = currentValue.length < previousValue.length;
     
+    // For deletion, clean and allow natural editing
     if (isDeleting) {
-      // Just store the current value and return, allow natural deletion
-      e.target.setAttribute('data-prev-value', value);
+      const cleaned = currentValue.toUpperCase().replace(/[^0-9APM:\s]/g, '');
+      e.target.value = cleaned;
+      e.target.setAttribute('data-prev-value', cleaned);
       return;
     }
     
-    // Remove invalid characters, keep digits, colon, A, M, P, and space
-    value = value.replace(/[^0-9APM:\s]/g, '');
+    // Parse and format the input
+    const parsed = parseTimeInput12Hour(currentValue);
+    const formatted = formatTime12Hour(parsed);
     
-    // Extract AM/PM if present
-    const ampmMatch = value.match(/(AM|PM)/);
-    const timeOnly = value.replace(/\s*(AM|PM)\s*/g, '');
-    
-    // Extract digits for time formatting
-    let digits = timeOnly.replace(/[^\d]/g, '');
-    
-    // Limit to 4 digits maximum
-    if (digits.length > 4) {
-      digits = digits.slice(0, 4);
-    }
-    
-    let formattedTime = '';
-    
-    if (digits.length === 0) {
-      formattedTime = '';
-    } else if (digits.length <= 2) {
-      // Just hours entered
-      let hours = parseInt(digits);
-      if (hours > 12) {
-        hours = 12;
-      } else if (hours === 0 && digits.length === 2) {
-        hours = 12;
-      }
-      formattedTime = hours.toString();
-    } else {
-      // Hours and minutes
-      let hours = digits.slice(0, -2);
-      let minutes = digits.slice(-2);
-      
-      // Validate and fix hours (1-12 for 12-hour format)
-      hours = parseInt(hours);
-      if (hours > 12) {
-        hours = 12;
-      } else if (hours === 0) {
-        hours = 12;
-      }
-      
-      // Validate and fix minutes (0-59)
-      minutes = parseInt(minutes);
-      if (minutes > 59) {
-        minutes = 59;
-      }
-      
-      formattedTime = hours + ':' + minutes.toString().padStart(2, '0');
-    }
-    
-    // Add AM/PM
-    if (formattedTime && formattedTime.includes(':')) {
-      if (ampmMatch) {
-        formattedTime += ' ' + ampmMatch[1];
-      } else {
-        formattedTime += ' AM';
-      }
-    } else if (formattedTime && ampmMatch) {
-      formattedTime += ' ' + ampmMatch[1];
-    }
-    
-    e.target.value = formattedTime;
-    e.target.setAttribute('data-prev-value', formattedTime);
+    e.target.value = formatted;
+    e.target.setAttribute('data-prev-value', formatted);
   } else {
-    // Handle 24-hour format (existing logic)
-    let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
+    // ...existing code...
+    // Handle 24-hour format with improved deletion support
+    const currentValue = e.target.value;
+    const previousValue = e.target.getAttribute('data-prev-value') || '';
+    const isDeleting = currentValue.length < previousValue.length;
+    
+    let value = currentValue.replace(/[^\d]/g, ''); // Remove non-digits
     
     // Limit to 4 digits maximum
     if (value.length > 4) {
       value = value.slice(0, 4);
     }
     
-    // Format as HH:MM and validate
-    if (value.length >= 3) {
+    // Handle deletion: if user is deleting and we have exactly 2 digits, don't auto-add colon
+    if (isDeleting && value.length === 2) {
+      // Just show the hours without colon when deleting
+      e.target.value = value;
+    } else if (value.length === 2 && !isDeleting) {
+      // Auto-add colon after 2 digits (hours) only when not deleting
+      let hours = parseInt(value);
+      if (hours > 23) {
+        hours = 23;
+        value = hours.toString().padStart(2, '0');
+      }
+      value = value + ':';
+      e.target.value = value;
+    } else if (value.length >= 3) {
+      // Format as HH:MM and validate
       let hours = value.slice(0, 2);
       let minutes = value.slice(2);
       
@@ -264,9 +351,14 @@ function handleTimeInputMask(e) {
       }
       
       value = hours + ':' + minutes;
+      e.target.value = value;
+    } else {
+      // Less than 2 digits, just show the numbers
+      e.target.value = value;
     }
     
-    e.target.value = value;
+    // Store current value for next comparison
+    e.target.setAttribute('data-prev-value', e.target.value);
   }
 }
 
@@ -299,9 +391,10 @@ function handleTimeInputKeydown(e) {
     return;
   }
   
-  // Allow navigation keys and numbers 0-9
+  // Allow navigation keys and numbers 0-9, and colon
   if (allowedKeys.includes(e.key) || 
-      (e.key >= '0' && e.key <= '9')) {
+      (e.key >= '0' && e.key <= '9') ||
+      e.key === ':') {
     return;
   }
   
@@ -1088,22 +1181,15 @@ window.deleteTimer = deleteTimer;
 function toggleAmPm(input, key) {
   let value = input.value.toUpperCase();
   
-  // If there's already AM or PM, replace it
-  if (value.includes('AM') || value.includes('PM')) {
+  // Clean up any existing AM/PM related characters (A, P, M, AM, PM)
+  value = value.replace(/\s*(AM|PM|A|P|M)\s*$/g, '').trim();
+  
+  // Add the new AM/PM
+  if (value) {
     if (key === 'A') {
-      value = value.replace(/(AM|PM)/, 'AM');
+      value += ' AM';
     } else if (key === 'P') {
-      value = value.replace(/(AM|PM)/, 'PM');
-    }
-  } else {
-    // If no AM/PM exists, add it
-    value = value.trim();
-    if (value) {
-      if (key === 'A') {
-        value += ' AM';
-      } else if (key === 'P') {
-        value += ' PM';
-      }
+      value += ' PM';
     }
   }
   

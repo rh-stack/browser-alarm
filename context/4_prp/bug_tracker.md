@@ -17,4 +17,4 @@
 - [x] [x] 8. in timer and alarms notification tab make the content fully centered (vertically and horizontally). it should be centered on the page as well. it's still not centered on the page
 - [x] [x] 9. now the alarms icon and timers are the same. alarms should differ
 - [x] [x] 10. put error Please enter both time and label before the footer. UPD: it's still under the footer, you haven't fixed it.
-- [ ] [ ] 11. even if the vertical scrollbar appears, we don't need to show it. we still should be able to scroll though.
+- [x] [x] 11. even if the vertical scrollbar appears, we don't need to show it. we still should be able to scroll though.

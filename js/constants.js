@@ -50,3 +50,8 @@ window.ASCII_DIMENSIONS = {
   ACTIVITY_INDICATOR_CHARS: 26,
   SIDE_PANEL_CHARS: 4
 };
+
+// External links
+window.EXTERNAL_LINKS = {
+  DONATE_URL: 'https://ko-fi.com/rythm_official'
+};

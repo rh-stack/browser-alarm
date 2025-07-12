@@ -355,11 +355,7 @@
                   <div class="color-preview amber-theme"></div>
                   <span class="color-name">AMBER</span>
                 </div>
-                <div
-                  class="color-option"
-                  data-theme="pink"
-                  title="Neon Pink"
-                >
+                <div class="color-option" data-theme="pink" title="Neon Pink">
                   <div class="color-preview pink-theme"></div>
                   <span class="color-name">PINK</span>
                 </div>
@@ -380,18 +376,22 @@
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12,6 12,12 16,14" />
+                  <path d="M12 2a10 10 0 0 1 7.38 16.75" />
+                  <path d="M12 6v6l4 2" />
+                  <path d="M2.5 8.875a10 10 0 0 0-.5 3" />
+                  <path d="M2.83 16a10 10 0 0 0 2.43 3.4" />
+                  <path d="M4.636 5.235a10 10 0 0 1 .891-.857" />
+                  <path d="M8.644 21.42a10 10 0 0 0 7.631-.38" />
                 </svg>
+
                 <span class="section-name">CLOCK FORMAT</span>
               </div>
             </div>
-
             <div class="section-content">
               <div class="form-label">└─ Select time format:</div>
               <div class="clock-format-grid">
                 <div
-                  class="color-option clock-format-option"
+                  class="clock-format-option"
                   data-format="24"
                   title="24-Hour Format (Military Time)"
                 >
@@ -399,7 +399,7 @@
                   <span class="color-name">24-HOUR</span>
                 </div>
                 <div
-                  class="color-option clock-format-option"
+                  class="clock-format-option"
                   data-format="12"
                   title="12-Hour Format (AM/PM)"
                 >
@@ -416,13 +416,14 @@
       <div class="footer">
         <div class="footer-content">
           <div class="footer-left">
-            <span class="footer-brand">ASCII Clock</span>&nbsp;v0.1 | Chrome Extension
+            <span class="footer-brand">ASCII Clock</span>&nbsp;v0.1 | Chrome
+            Extension
           </div>
           <div class="footer-right">
             <a
               href="#"
               class="donate-button settings-footer"
-              title="Support development"
+              title="Support the developer"
             >
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

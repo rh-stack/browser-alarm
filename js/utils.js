@@ -16,7 +16,7 @@ window.formatCurrentTime = function(format = '24') {
   if (format === '12') {
     timeStr = now.toLocaleTimeString('en-US', { 
       hour12: true,
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
       second: '2-digit'
     });

@@ -23,6 +23,16 @@ body::-webkit-scrollbar,
 }
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600&display=swap');
 
+/* Prevent theme flash on load */
+body.alarm-page, body.timer-page {
+  opacity: 0;
+  transition: opacity 0.1s ease-in;
+}
+
+body.alarm-page.theme-loaded, body.timer-page.theme-loaded {
+  opacity: 1;
+}
+
 :root {
   --background: 120 100% 3%;
   --foreground: 120 100% 80%;
@@ -466,7 +476,7 @@ body::before {
 
 .section-header {
   border-bottom: 1px solid hsl(var(--border));
-  padding: 6px 8px;
+  padding: 8px 8px;
   background-color: hsl(var(--secondary));
 }
 
@@ -925,7 +935,26 @@ body.timer-page .terminal-container {
 }
 
 .clock-format-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding: 16px 12px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 2px;
+}
+
+.clock-format-option:hover {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--muted));
+}
+
+.clock-format-option.active {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
 }
 
 .format-preview {

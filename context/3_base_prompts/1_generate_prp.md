@@ -1,7 +1,7 @@
 
 ## Task
 
-1. Learn the file with Feature description: [foundation prompt](../2_feature_briefs/1_foundation_prompt.md)
+1. Learn the file with Feature description: [2_features.md](../2_feature_briefs/2_features.md)
 2. Generate a complete Project Requirement Prompt (PRP) for feature implementation with thorough research.
 
 ## Research Process
