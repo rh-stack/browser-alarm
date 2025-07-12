@@ -271,7 +271,7 @@ body::before {
 
 .left-panel, .right-panel {
   opacity: 0.9;
-  font-size: 11px;
+  font-size: 12px;
   width: 72px; /* Fixed width for consistent spacing */
 }
 
