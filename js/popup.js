@@ -1,8 +1,3 @@
-// Shared constants and utilities are loaded via script tags
-// STORAGE_KEYS, MESSAGE_TYPES, UI_CONSTANTS, ANIMATION_INTERVALS, ASCII_DIMENSIONS available from constants.js
-// formatDuration, getTimeUntilAlarm, formatCurrentTime, isValidTime, generateId, getDefaultAlarmTime, isValidLabel available from utils.js
-
-// DOM elements
 let currentTimeEl, systemUptimeEl, activeCountEl;
 let alarmsCountEl, timersCountEl, alarmsListEl, timersListEl;
 let newAlarmTimeEl, newAlarmLabelEl, addAlarmBtnEl;
@@ -10,13 +5,11 @@ let newTimerMinutesEl, newTimerLabelEl, addTimerBtnEl;
 let settingsBtnEl, backBtnEl, mainScreenEl, settingsScreenEl;
 let headerPromptEl;
 
-// State
 let alarms = [];
 let timers = [];
 let currentTheme = 'green';
-let clockFormat = '24'; // '12' or '24'
+let clockFormat = '24';
 
-// Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
   initializeElements();
   setupEventListeners();
@@ -24,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateUI();
   startTimeUpdates();
   setDefaultAlarmTime();
-  updateAlarmInputFormat(); // Ensure input format is set after all initialization
+  updateAlarmInputFormat();
 });
 
 function initializeElements() {
@@ -44,19 +37,16 @@ function initializeElements() {
   newTimerLabelEl = document.getElementById('new-timer-label');
   addTimerBtnEl = document.getElementById('add-timer-btn');
 
-  // Navigation elements
   settingsBtnEl = document.getElementById('settings-btn');
   backBtnEl = document.getElementById('back-btn');
   mainScreenEl = document.getElementById('main-screen');
   settingsScreenEl = document.getElementById('settings-screen');
   headerPromptEl = document.getElementById('header-prompt');
 
-  // Initialize ASCII art dynamic elements
   initializeAsciiElements();
 }
 
 function initializeAsciiElements() {
-  // Start dynamic ASCII animations
   startSystemIndicatorRotation();
   startProgressBarAnimation();
   startActivityScan();
@@ -69,11 +59,9 @@ function setupEventListeners() {
   addAlarmBtnEl.addEventListener('click', addAlarm);
   addTimerBtnEl.addEventListener('click', addTimer);
 
-  // Navigation listeners
   settingsBtnEl.addEventListener('click', showSettings);
   backBtnEl.addEventListener('click', showMain);
 
-  // Color theme listeners
   document.querySelectorAll('.color-option').forEach(option => {
     option.addEventListener('click', (e) => {
       const theme = option.dataset.theme;
@@ -81,15 +69,12 @@ function setupEventListeners() {
     });
   });
 
-  // Time input mask for alarm time
   newAlarmTimeEl.addEventListener('input', handleTimeInputMask);
   newAlarmTimeEl.addEventListener('keydown', handleTimeInputKeydown);
 
-  // Numbers only mask for timer minutes
   newTimerMinutesEl.addEventListener('input', handleTimerInputMask);
   newTimerMinutesEl.addEventListener('keydown', handleTimerInputKeydown);
 
-  // Enter key support
   newAlarmLabelEl.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addAlarm();
   });
@@ -98,7 +83,6 @@ function setupEventListeners() {
     if (e.key === 'Enter') addTimer();
   });
 
-  // Donate button listener
   const donateButton = document.querySelector('.donate-button');
   if (donateButton) {
     donateButton.addEventListener('click', (e) => {
@@ -109,7 +93,6 @@ function setupEventListeners() {
     });
   }
 
-  // Clock format options
   document.querySelectorAll('.clock-format-option').forEach(option => {
     option.addEventListener('click', () => {
       const format = option.dataset.format;
@@ -130,23 +113,22 @@ async function loadData() {
     timers = result[window.STORAGE_KEYS.TIMERS] || [];
     currentTheme = result[window.STORAGE_KEYS.THEME] || 'green';
     clockFormat = result[window.STORAGE_KEYS.CLOCK_FORMAT] || '24';
-    
-    // Apply saved theme and clock format
+
     applyTheme(currentTheme);
     updateActiveThemeIndicator();
     updateActiveClockFormatIndicator();
-    updateAlarmInputFormat(); // Ensure placeholder is set correctly
+    updateAlarmInputFormat();
   } catch (error) {
     console.error('Error loading data:', error);
     alarms = [];
     timers = [];
     currentTheme = 'green';
     clockFormat = '24';
-    // Apply defaults if loading failed
+
     applyTheme(currentTheme);
     updateActiveThemeIndicator();
     updateActiveClockFormatIndicator();
-    updateAlarmInputFormat(); // Ensure placeholder is set correctly
+    updateAlarmInputFormat();
   }
 }
 
@@ -165,14 +147,12 @@ function setDefaultAlarmTime() {
 function parseTimeInput12Hour(input) {
   const cleanInput = input.toUpperCase().replace(/[^0-9APM:\s]/g, '');
   
-  // Extract AM/PM
   let ampm = '';
   if (cleanInput.includes('AM')) ampm = 'AM';
   else if (cleanInput.includes('PM')) ampm = 'PM';
   else if (cleanInput.includes('A') && !cleanInput.includes('M')) ampm = 'AM';
   else if (cleanInput.includes('P') && !cleanInput.includes('M')) ampm = 'PM';
-  
-  // Extract time part (remove AM/PM)
+
   const timeOnly = cleanInput.replace(/\s*(AM|PM|A|P)\s*/g, '');
   const allDigits = timeOnly.replace(/[^\d]/g, '');
   const hasColon = timeOnly.includes(':');
@@ -193,57 +173,43 @@ function formatTime12Hour(parsed) {
   }
   
   let formattedTime = '';
-  
-  // Handle different input patterns
+
   if (allDigits.length === 1) {
-    // Single digit: "1"
     formattedTime = allDigits;
   } else if (allDigits.length === 2) {
-    // Two digits: "12" or "13" 
     const num = parseInt(allDigits);
     if (num > 12 && !hasColon) {
-      // "13" -> "1:3" (forced formatting for invalid hour)
       formattedTime = `${allDigits[0]}:${allDigits[1]}`;
     } else if (!hasColon) {
-      // "12" -> "12:" (auto-colon insertion for AC4, regardless of AM/PM)
       formattedTime = `${allDigits}:`;
     } else {
-      // User manually typed colon, keep as is
       formattedTime = allDigits;
     }
   } else if (allDigits.length === 3) {
-    // Three digits: "110" or "101"
     if (ampm || hasColon) {
-      // User signaled completion with AM/PM or colon
       const h = parseInt(allDigits[0]) || 12;
       const m = Math.min(parseInt(allDigits.slice(1)), 59);
       formattedTime = `${h}:${m.toString().padStart(2, '0')}`;
     } else {
-      // Wait for more input - show digits as is
       formattedTime = allDigits;
     }
   } else if (allDigits.length >= 4) {
-    // Four or more digits: "1010" or "0110"
     let hours, minutes;
     
     if (allDigits[0] === '0') {
-      // Handle leading zero: "0110" -> hour=1, min=10
       hours = parseInt(allDigits[1]) || 12;
       minutes = parseInt(allDigits.slice(2, 4));
     } else {
       const firstTwo = parseInt(allDigits.slice(0, 2));
       if (firstTwo > 12) {
-        // "1310" -> hour=1, min=31 (from digits 1,3,1,0)
         hours = parseInt(allDigits[0]);
         minutes = parseInt(allDigits.slice(1, 3));
       } else {
-        // "1010" -> hour=10, min=10
         hours = firstTwo;
         minutes = parseInt(allDigits.slice(2, 4));
       }
     }
     
-    // Validate and constrain values
     if (hours === 0) hours = 12;
     if (hours > 12) hours = 12;
     if (minutes > 59) minutes = 59;
@@ -251,7 +217,6 @@ function formatTime12Hour(parsed) {
     formattedTime = `${hours}:${minutes.toString().padStart(2, '0')}`;
   }
   
-  // Handle manual colon input cases like "1:10p" or "01:1p"
   if (hasColon) {
     const parts = timeOnly.split(':');
     const hourPart = parts[0].replace(/[^\d]/g, '');
@@ -264,19 +229,17 @@ function formatTime12Hour(parsed) {
       
       formattedTime = h.toString();
       
-      if (parts.length > 1) { // Only add colon if user typed it
+      if (parts.length > 1) { 
         formattedTime += ':';
         if (minutePart) {
           const m = Math.min(parseInt(minutePart), 59);
           formattedTime += m.toString().padStart(2, '0');
         } else if (timeOnly.endsWith(':')) {
-          // User just typed colon, don't add minutes yet
         }
       }
     }
   }
   
-  // Add AM/PM if present
   if (formattedTime && ampm) {
     formattedTime += ` ${ampm}`;
   }
@@ -294,7 +257,6 @@ function handleTimeInputMask(e) {
     const previousValue = e.target.getAttribute('data-prev-value') || '';
     const isDeleting = currentValue.length < previousValue.length;
     
-    // For deletion, clean and allow natural editing
     if (isDeleting) {
       const cleaned = currentValue.toUpperCase().replace(/[^0-9APM:\s]/g, '');
       e.target.value = cleaned;
@@ -302,32 +264,25 @@ function handleTimeInputMask(e) {
       return;
     }
     
-    // Parse and format the input
     const parsed = parseTimeInput12Hour(currentValue);
     const formatted = formatTime12Hour(parsed);
     
     e.target.value = formatted;
     e.target.setAttribute('data-prev-value', formatted);
   } else {
-    // ...existing code...
-    // Handle 24-hour format with improved deletion support
     const currentValue = e.target.value;
     const previousValue = e.target.getAttribute('data-prev-value') || '';
     const isDeleting = currentValue.length < previousValue.length;
     
-    let value = currentValue.replace(/[^\d]/g, ''); // Remove non-digits
-    
-    // Limit to 4 digits maximum
+    let value = currentValue.replace(/[^\d]/g, '');
+ 
     if (value.length > 4) {
       value = value.slice(0, 4);
     }
-    
-    // Handle deletion: if user is deleting and we have exactly 2 digits, don't auto-add colon
+
     if (isDeleting && value.length === 2) {
-      // Just show the hours without colon when deleting
       e.target.value = value;
     } else if (value.length === 2 && !isDeleting) {
-      // Auto-add colon after 2 digits (hours) only when not deleting
       let hours = parseInt(value);
       if (hours > 23) {
         hours = 23;
@@ -336,16 +291,13 @@ function handleTimeInputMask(e) {
       value = value + ':';
       e.target.value = value;
     } else if (value.length >= 3) {
-      // Format as HH:MM and validate
       let hours = value.slice(0, 2);
       let minutes = value.slice(2);
       
-      // Auto-correct hours (max 23)
       if (parseInt(hours) > 23) {
         hours = '23';
       }
       
-      // Auto-correct minutes (max 59)
       if (parseInt(minutes) > 59) {
         minutes = '59';
       }
@@ -353,11 +305,9 @@ function handleTimeInputMask(e) {
       value = hours + ':' + minutes;
       e.target.value = value;
     } else {
-      // Less than 2 digits, just show the numbers
       e.target.value = value;
     }
     
-    // Store current value for next comparison
     e.target.setAttribute('data-prev-value', e.target.value);
   }
 }
@@ -372,38 +322,32 @@ function handleTimeInputKeydown(e) {
     'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'
   ];
   
-  // Allow Ctrl+A for select all
   if (e.ctrlKey && e.key === 'a') {
     return;
   }
   
-  // Handle Enter key to submit alarm
   if (e.key === 'Enter') {
     e.preventDefault();
     addAlarm();
     return;
   }
   
-  // For 12-hour format, handle A/P key to toggle AM/PM
   if (clockFormat === '12' && (e.key === 'a' || e.key === 'A' || e.key === 'p' || e.key === 'P')) {
     e.preventDefault();
     toggleAmPm(e.target, e.key.toUpperCase());
     return;
   }
   
-  // Allow navigation keys and numbers 0-9, and colon
   if (allowedKeys.includes(e.key) || 
       (e.key >= '0' && e.key <= '9') ||
       e.key === ':') {
     return;
   }
   
-  // For 12-hour format, also allow M for AM/PM completion
   if (clockFormat === '12' && (e.key === 'm' || e.key === 'M')) {
     return;
   }
   
-  // Prevent all other keys
   e.preventDefault();
 }
 
@@ -412,7 +356,7 @@ function handleTimeInputKeydown(e) {
  * @param {Event} e - Input event
  */
 function handleTimerInputMask(e) {
-  let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
+  let value = e.target.value.replace(/[^\d]/g, '');
   
   // Limit to reasonable timer values (999 minutes max)
   if (parseInt(value) > window.UI_CONSTANTS.MAX_TIMER_MINUTES) {
@@ -434,7 +378,6 @@ function handleTimerInputKeydown(e) {
     return;
   }
   
-  // Handle Ctrl+A for select all
   if (e.ctrlKey && e.key.toLowerCase() === 'a') {
     e.preventDefault();
     e.target.select();
@@ -446,13 +389,11 @@ function handleTimerInputKeydown(e) {
     'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
   ];
   
-  // Allow navigation keys and numbers 0-9
   if (allowedKeys.includes(e.key) || 
       (e.key >= '0' && e.key <= '9')) {
     return;
   }
   
-  // Prevent all other keys
   e.preventDefault();
 }
 
@@ -461,10 +402,10 @@ function handleTimerInputKeydown(e) {
  */
 function startTimeUpdates() {
   updateTime();
-  updateUI(); // Ensure UI updates immediately
+  updateUI();
   setInterval(() => {
     updateTime();
-    updateUI(); // Update UI every second for real-time countdowns
+    updateUI();
   }, window.ANIMATION_INTERVALS.TIME_UPDATE);
 }
 
@@ -487,7 +428,6 @@ function updateCounts() {
   const totalActive = alarms.length + timers.length;
   activeCountEl.textContent = totalActive.toString().padStart(2, '0');
   
-  // Update ASCII art based on active count
   updateAsciiArt(totalActive);
 }
 
@@ -769,11 +709,6 @@ async function saveTimers() {
   }
 }
 
-// Removed duplicate getTimeUntilAlarm function - now imported from utils.js
-
-// Removed duplicate formatDuration function - now imported from utils.js
-
-// ASCII Art Animation Functions
 /**
  * Starts the rotating system indicator animation
  */
@@ -868,11 +803,8 @@ function startActivityScan() {
 }
 
 function startSidePanelAnimations() {
-  // Left panel - system monitoring
   startUptimeAnimation();
   startResourceMonitoring();
-  
-  // Right panel - activity log
   startActivityLog();
 }
 
@@ -984,7 +916,6 @@ function updateActivityIndicator(active) {
   }
 }
 
-// Navigation Functions
 /**
  * Shows the settings screen
  */
@@ -992,19 +923,17 @@ function showSettings() {
   mainScreenEl.style.display = 'none';
   settingsScreenEl.style.display = 'block';
   
-  // Update header for settings
   headerPromptEl.textContent = '┌─[settings@config]─[~]';
   backBtnEl.style.display = 'flex';
   settingsBtnEl.style.display = 'none';
-  
-  // Show donate button
+
   const donateButton = document.querySelector('.donate-button');
   if (donateButton) {
     donateButton.style.display = 'flex';
   }
   
   updateActiveThemeIndicator();
-  updateActiveClockFormatIndicator(); // Also update clock format indicators
+  updateActiveClockFormatIndicator();
 }
 
 /**
@@ -1026,7 +955,6 @@ function showMain() {
   }
 }
 
-// Theme Functions
 /**
  * Changes the app theme
  * @param {string} theme - Theme name ('green', 'blue', 'amber', 'pink', 'red')
@@ -1065,7 +993,6 @@ function updateActiveThemeIndicator() {
   });
 }
 
-// Clock Format Functions
 /**
  * Changes the app clock format
  * @param {string} format - Clock format ('12' or '24')
@@ -1077,13 +1004,11 @@ async function changeClockFormat(format) {
   updateTime(); // Update current time display immediately
   renderAlarms(); // Re-render alarms to update time format display
   
-  // Clear the current input to avoid format conflicts
   const alarmTimeInput = document.getElementById('new-alarm-time');
   if (alarmTimeInput) {
     alarmTimeInput.value = '';
   }
   
-  // Save clock format to storage
   try {
     await chrome.storage.local.set({ [window.STORAGE_KEYS.CLOCK_FORMAT]: format });
   } catch (error) {
@@ -1095,22 +1020,18 @@ async function changeClockFormat(format) {
  * Updates the active clock format indicator in settings
  */
 function updateActiveClockFormatIndicator() {
-  // Get all clock format options
   const clockFormatOptions = document.querySelectorAll('.clock-format-option');
   
-  // Remove active class from all options first
   clockFormatOptions.forEach(option => {
     option.classList.remove('active');
   });
   
-  // Add active class to the selected format
   clockFormatOptions.forEach(option => {
     if (option.dataset.format === clockFormat) {
       option.classList.add('active');
     }
   });
   
-  // Update alarm input placeholder and format
   updateAlarmInputFormat();
 }
 
@@ -1143,13 +1064,11 @@ function startMatrixRainAnimation() {
     document.getElementById('matrix-rain-4')
   ];
   
-  // Generate different patterns for each line
   const patterns = rainElements.map(() => generateMatrixPattern());
   
   function updateMatrixRain() {
     rainElements.forEach((element, index) => {
       if (element) {
-        // Shift pattern and add new character at the beginning
         patterns[index] = [getRandomMatrixChar()].concat(patterns[index].slice(0, -1));
         element.textContent = patterns[index].join('');
       }
@@ -1165,11 +1084,9 @@ function startMatrixRainAnimation() {
     return matrixChars[Math.floor(Math.random() * matrixChars.length)];
   }
   
-  // Start the animation
   setInterval(updateMatrixRain, window.ANIMATION_INTERVALS.MATRIX_RAIN);
 }
 
-// Make functions global for onclick handlers
 window.deleteAlarm = deleteAlarm;
 window.deleteTimer = deleteTimer;
 
@@ -1181,10 +1098,8 @@ window.deleteTimer = deleteTimer;
 function toggleAmPm(input, key) {
   let value = input.value.toUpperCase();
   
-  // Clean up any existing AM/PM related characters (A, P, M, AM, PM)
   value = value.replace(/\s*(AM|PM|A|P|M)\s*$/g, '').trim();
   
-  // Add the new AM/PM
   if (value) {
     if (key === 'A') {
       value += ' AM';

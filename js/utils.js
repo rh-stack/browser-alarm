@@ -1,8 +1,4 @@
 /**
- * Shared utility functions for the ASCII Clock extension
- */
-
-/**
  * Formats the current time and date for display
  * @param {string} format - Clock format ('12' or '24')
  * @returns {string} Formatted time string (DD/MM/YYYY HH:MM:SS)
@@ -104,8 +100,6 @@ window.getTimeUntilAlarm = function(timeString, showSeconds = false) {
     }
   }
 }
-
-
 
 /**
  * Validates time input in HH:MM format

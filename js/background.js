@@ -1,4 +1,3 @@
-// Shared constants - duplicated here since service workers can't easily share modules
 const STORAGE_KEYS = {
   ALARMS: 'alarms',
   TIMERS: 'timers'
@@ -43,7 +42,6 @@ function safeEncodeURIComponent(str) {
   return encodeURIComponent(str);
 }
 
-// Initialize service worker
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('Extension installed');
   await rehydrateAlarms();
@@ -54,7 +52,6 @@ chrome.runtime.onStartup.addListener(async () => {
   await rehydrateAlarms();
 });
 
-// Message handling from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case MESSAGE_TYPES.SCHEDULE_ALARM:
@@ -74,7 +71,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Alarm fired handler
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   console.log('Alarm fired:', alarm.name);
   
@@ -167,18 +163,13 @@ async function clearTimer(id) {
  */
 async function handleAlarmFired(alarmName) {
   const id = alarmName.replace(NAME_PREFIXES.ALARM, '');
-  
-  // Get alarm details from storage
   const result = await chrome.storage.local.get([STORAGE_KEYS.ALARMS]);
   const alarms = result[STORAGE_KEYS.ALARMS] || [];
   const alarm = alarms.find(a => a.id === id);
   
   if (alarm) {
-    // Open notification tab
     const url = chrome.runtime.getURL(`alarm.html?id=${id}&time=${alarm.time}&label=${safeEncodeURIComponent(alarm.label)}`);
     await chrome.tabs.create({ url });
-    
-    // Remove alarm from storage
     const updatedAlarms = alarms.filter(a => a.id !== id);
     await chrome.storage.local.set({ [STORAGE_KEYS.ALARMS]: updatedAlarms });
   }
@@ -190,19 +181,14 @@ async function handleAlarmFired(alarmName) {
  */
 async function handleTimerFired(timerName) {
   const id = timerName.replace(NAME_PREFIXES.TIMER, '');
-  
-  // Get timer details from storage
   const result = await chrome.storage.local.get([STORAGE_KEYS.TIMERS]);
   const timers = result[STORAGE_KEYS.TIMERS] || [];
   const timer = timers.find(t => t.id === id);
   
   if (timer) {
     const duration = formatDuration(timer.durationMs);
-    // Open notification tab
     const url = chrome.runtime.getURL(`timer.html?id=${id}&duration=${safeEncodeURIComponent(duration)}&label=${safeEncodeURIComponent(timer.label)}`);
     await chrome.tabs.create({ url });
-    
-    // Remove timer from storage
     const updatedTimers = timers.filter(t => t.id !== id);
     await chrome.storage.local.set({ [STORAGE_KEYS.TIMERS]: updatedTimers });
   }
@@ -216,18 +202,15 @@ async function rehydrateAlarms() {
     const result = await chrome.storage.local.get([STORAGE_KEYS.ALARMS, STORAGE_KEYS.TIMERS]);
     const alarms = result[STORAGE_KEYS.ALARMS] || [];
     const timers = result[STORAGE_KEYS.TIMERS] || [];
-    
-    // Re-schedule all active alarms
     for (const alarm of alarms) {
-      if (alarm.enabled !== false) { // Default to enabled if not specified
+      if (alarm.enabled !== false) {
         await scheduleAlarm(alarm);
       }
     }
-    
-    // Re-schedule all active timers that haven't expired
+
     const now = Date.now();
     for (const timer of timers) {
-      if (timer.enabled !== false && timer.endTime > now) { // Default to enabled if not specified
+      if (timer.enabled !== false && timer.endTime > now) { 
         await scheduleTimer(timer);
       }
     }

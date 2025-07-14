@@ -1,14 +1,7 @@
-// Shared notification functionality loaded via script tags
-// Initialize timer notification page
 window.addEventListener('DOMContentLoaded', async () => {
-  // Load and apply theme as quickly as possible
   const theme = await loadTheme();
   document.documentElement.setAttribute('data-theme', theme);
-  
-  // Show page after theme is applied
   document.body.classList.add('theme-loaded');
-  
-  // Initialize notification (timer duration doesn't need format conversion)
   initializeTimerNotification();
 });
 
@@ -33,14 +26,12 @@ function initializeTimerNotification() {
   const duration = params.get('duration') || '';
   const label = params.get('label') || '';
   
-  // Update display elements (duration doesn't need clock format conversion)
   const durationElement = document.getElementById('timer-duration');
   const labelElement = document.getElementById('timer-label');
   
   if (durationElement) durationElement.textContent = duration;
   if (labelElement) labelElement.textContent = label;
   
-  // Setup close button
   const closeButton = document.getElementById('thanks-btn');
   if (closeButton) {
     closeButton.addEventListener('click', () => {

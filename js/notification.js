@@ -1,9 +1,4 @@
 /**
- * Shared notification handler for alarm and timer notifications
- * Provides common functionality for closing notification tabs
- */
-
-/**
  * Initializes notification page with common functionality
  * @param {Object} config - Configuration object
  * @param {string} config.timeElementId - ID of element to display time/duration
@@ -16,15 +11,12 @@ window.initializeNotification = function(config) {
   const params = new URLSearchParams(window.location.search);
   const time = params.get(config.timeParam) || '';
   const label = params.get(config.labelParam) || '';
-  
-  // Update display elements
   const timeElement = document.getElementById(config.timeElementId);
   const labelElement = document.getElementById(config.labelElementId);
   
   if (timeElement) timeElement.textContent = time;
   if (labelElement) labelElement.textContent = label;
-  
-  // Setup close button
+
   const closeButton = document.getElementById(config.buttonId);
   if (closeButton) {
     closeButton.addEventListener('click', () => {

@@ -5,8 +5,7 @@
   "description": "Retro terminal-style alarm and timer extension with animated ASCII art interface. Perfect for developers and terminal enthusiasts.",
   "permissions": [
     "alarms",
-    "storage",
-    "tabs"
+    "storage"
   ],
   "background": {
     "service_worker": "js/background.js"

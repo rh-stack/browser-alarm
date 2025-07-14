@@ -1,17 +1,12 @@
-/* Hide native scrollbar but allow scrolling using parent/child trick */
-
-/* Hide vertical scrollbar but allow scrolling for all elements */
 * {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none;  /* IE 10+ */
 }
 
-/* Hide scrollbar for webkit browsers (Chrome, Safari, Edge) */
 *::-webkit-scrollbar {
   display: none;
 }
 
-/* Specific targeting for body and containers */
 body, .terminal-container {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none;  /* IE 10+ */
@@ -154,8 +149,6 @@ body::before {
   100% { opacity: 1; }
 }
 
-
-
 .scan-line {
   position: absolute;
   top: 0;
@@ -292,12 +285,12 @@ body::before {
 .left-panel, .right-panel {
   opacity: 0.9;
   font-size: 12px;
-  width: 72px; /* Fixed width for consistent spacing */
+  width: 72px;
 }
 
 .main-panel {
   flex: 1;
-  max-width: calc(100% - 2 * 72px - 2 * 12px - 2 * 12px); /* Account for side panels and gaps */
+  max-width: calc(100% - 2 * 72px - 2 * 12px - 2 * 12px);
 }
 
 .left-panel .ascii-line,
@@ -305,7 +298,6 @@ body::before {
   line-height: 1.2;
 }
 
-/* Side panel specific animations */
 #left-status {
   animation: leftStatusPulse 2.5s ease-in-out infinite;
 }
@@ -526,7 +518,6 @@ body::before {
   padding: 8px;
 }
 
-/* Make delete button larger */
 .button-ghost.delete-alarm, .button-ghost.delete-timer {
   font-size: 1.5em;
   width: 1.5em;
@@ -535,9 +526,10 @@ body::before {
   align-items: center;
   justify-content: center;
   line-height: 1;
-  padding-top: 8px;
-  transition: background 0.8s;
+  padding: 0;
+  transition: all 0.2s;
 }
+
 .button-ghost.delete-alarm:hover, .button-ghost.delete-timer:hover {
   background: hsl(var(--muted));
 }
@@ -754,7 +746,6 @@ body::before {
   animation: blink 0.5s 2;
 }
 
-/* Center alarm and timer notification pages */
 body:has(.terminal-container > .scan-line + .ascii-art) {
   display: flex !important;
   justify-content: center !important;
@@ -773,7 +764,24 @@ body:has(.terminal-container > .scan-line + .ascii-art) .terminal-container {
   flex: none;
 }
 
-/* Fallback for alarm and timer pages with specific classes */
+body.has-ascii-art {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  box-sizing: border-box !important;
+}
+
+body.has-ascii-art .terminal-container {
+  min-height: auto;
+  width: 500px;
+  max-width: 500px;
+  position: relative;
+  flex: none;
+}
+
 body.alarm-page,
 body.timer-page {
   display: flex !important;
@@ -794,7 +802,6 @@ body.timer-page .terminal-container {
   flex: none;
 }
 
-/* Settings Screen Styles */
 .settings-screen {
   width: 100%;
 }
@@ -859,7 +866,6 @@ body.timer-page .terminal-container {
   flex-shrink: 0;
 }
 
-/* Fixed width for matrix rain elements to prevent container shifting and center them */
 #matrix-rain,
 #matrix-rain-2,
 #matrix-rain-3,
@@ -994,7 +1000,6 @@ body.timer-page .terminal-container {
   min-width: 60px;
 }
 
-/* Color Theme Variables */
 :root[data-theme="green"] {
   --background: 120 100% 3%;
   --foreground: 120 100% 80%;
@@ -1171,5 +1176,3 @@ body.timer-page .terminal-container {
   background: hsl(0, 100%, 50%);
   opacity: 0.3;
 }
-
-/* Color Theme Variables */
