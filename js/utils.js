@@ -1,3 +1,5 @@
+// Browser compatibility layer is loaded via HTML script tag
+
 /**
  * Formats the current time and date for display
  * @param {string} format - Clock format ('12' or '24')
@@ -127,10 +129,10 @@ window.generateId = function() {
  */
 window.closeTab = async function(fallbackFunction = () => window.close()) {
   try {
-    if (chrome.tabs) {
-      const tab = await chrome.tabs.getCurrent();
+    if (extensionAPI.tabs) {
+      const tab = await extensionAPI.tabs.getCurrent();
       if (tab && tab.id) {
-        await chrome.tabs.remove(tab.id);
+        await extensionAPI.tabs.remove(tab.id);
       } else {
         fallbackFunction();
       }

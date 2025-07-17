@@ -1,3 +1,5 @@
+// Browser compatibility layer is loaded via HTML script tag
+
 let currentTimeEl, systemUptimeEl, activeCountEl;
 let alarmsCountEl, timersCountEl, alarmsListEl, timersListEl;
 let newAlarmTimeEl, newAlarmLabelEl, addAlarmBtnEl;
@@ -59,6 +61,12 @@ function setupEventListeners() {
   addAlarmBtnEl.addEventListener('click', addAlarm);
   addTimerBtnEl.addEventListener('click', addTimer);
 
+  // Pomodoro button event listener
+  const pomodoroBtnEl = document.getElementById('pomodoro-btn');
+  if (pomodoroBtnEl) {
+    pomodoroBtnEl.addEventListener('click', startPomodoro);
+  }
+
   settingsBtnEl.addEventListener('click', showSettings);
   backBtnEl.addEventListener('click', showMain);
 
@@ -87,9 +95,8 @@ function setupEventListeners() {
   if (donateButton) {
     donateButton.addEventListener('click', (e) => {
       e.preventDefault();
-      chrome.tabs.create({ 
-        url: window.EXTERNAL_LINKS.DONATE_URL
-      });
+      // Use window.open instead of tabs API
+      window.open(window.EXTERNAL_LINKS.DONATE_URL, '_blank');
     });
   }
 
@@ -103,12 +110,13 @@ function setupEventListeners() {
 
 async function loadData() {
   try {
-    const result = await chrome.storage.local.get([
+    const result = await extensionAPI.storage.local.get([
       window.STORAGE_KEYS.ALARMS, 
       window.STORAGE_KEYS.TIMERS,
       window.STORAGE_KEYS.THEME,
       window.STORAGE_KEYS.CLOCK_FORMAT
     ]);
+    
     alarms = result[window.STORAGE_KEYS.ALARMS] || [];
     timers = result[window.STORAGE_KEYS.TIMERS] || [];
     currentTheme = result[window.STORAGE_KEYS.THEME] || 'green';
@@ -423,9 +431,12 @@ function updateUI() {
 }
 
 function updateCounts() {
+  // Count only active timers (not expired ones)
+  const activeTimers = timers.filter(timer => timer.endTime > Date.now());
+  
   alarmsCountEl.textContent = alarms.length;
-  timersCountEl.textContent = timers.length;
-  const totalActive = alarms.length + timers.length;
+  timersCountEl.textContent = activeTimers.length;
+  const totalActive = alarms.length + activeTimers.length;
   activeCountEl.textContent = totalActive.toString().padStart(2, '0');
   
   updateAsciiArt(totalActive);
@@ -457,7 +468,32 @@ function renderAlarms() {
     alarmsListEl.innerHTML = '<div class="empty-state">No alarms configured</div>';
     return;
   }
-  alarmsListEl.innerHTML = alarms.map(alarm => createAlarmHTML(alarm)).join('');
+  
+  // Sort alarms by closest time first
+  const sortedAlarms = [...alarms].sort((a, b) => {
+    // Calculate milliseconds until each alarm
+    const now = new Date();
+    
+    // Parse alarm time
+    const [hoursA, minutesA] = a.time.split(':').map(Number);
+    const [hoursB, minutesB] = b.time.split(':').map(Number);
+    
+    const alarmTimeA = new Date();
+    alarmTimeA.setHours(hoursA, minutesA, 0, 0);
+    if (alarmTimeA <= now) {
+      alarmTimeA.setDate(alarmTimeA.getDate() + 1);
+    }
+    
+    const alarmTimeB = new Date();
+    alarmTimeB.setHours(hoursB, minutesB, 0, 0);
+    if (alarmTimeB <= now) {
+      alarmTimeB.setDate(alarmTimeB.getDate() + 1);
+    }
+    
+    return alarmTimeA - alarmTimeB;
+  });
+  
+  alarmsListEl.innerHTML = sortedAlarms.map(alarm => createAlarmHTML(alarm)).join('');
   // Add delete listeners after rendering
   document.querySelectorAll('.delete-alarm').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -468,17 +504,27 @@ function renderAlarms() {
 }
 
 function renderTimers() {
-  if (timers.length === 0) {
-    timersListEl.innerHTML = '<div class="empty-state">No timers running</div>';
-    return;
+  // Clean up expired timers first
+  const now = Date.now();
+  const activeTimers = timers.filter(timer => timer.endTime > now);
+  
+  // Update the timers array if any were removed
+  if (activeTimers.length !== timers.length) {
+    timers = activeTimers;
+    saveTimers(); // Save the cleaned up array
   }
-  // Remove finished timers (remaining <= 0)
-  const activeTimers = timers.filter(timer => timer.endTime > Date.now());
+  
   if (activeTimers.length === 0) {
     timersListEl.innerHTML = '<div class="empty-state">No timers running</div>';
     return;
   }
-  timersListEl.innerHTML = activeTimers.map(timer => createTimerHTML(timer)).join('');
+  
+  // Sort timers by closest end time first (shortest remaining time)
+  const sortedTimers = [...activeTimers].sort((a, b) => {
+    return a.endTime - b.endTime;
+  });
+  
+  timersListEl.innerHTML = sortedTimers.map(timer => createTimerHTML(timer)).join('');
   // Add delete listeners after rendering
   document.querySelectorAll('.delete-timer').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -595,7 +641,7 @@ async function addAlarm() {
   await saveAlarms();
   
   // Schedule alarm
-  chrome.runtime.sendMessage({
+  extensionAPI.runtime.sendMessage({
     type: window.MESSAGE_TYPES.SCHEDULE_ALARM,
     alarm: alarm
   });
@@ -604,6 +650,33 @@ async function addAlarm() {
   newAlarmTimeEl.value = '';
   newAlarmLabelEl.value = '';
   setDefaultAlarmTime();
+  updateUI();
+}
+
+/**
+ * Starts a 25-minute Pomodoro timer with one click
+ */
+async function startPomodoro() {
+  const pomodoroMinutes = 25;
+  const label = 'pomodoro time';
+  
+  const durationMs = pomodoroMinutes * 60 * 1000;
+  const timer = {
+    id: window.generateId(),
+    durationMs: durationMs,
+    endTime: Date.now() + durationMs,
+    label: label
+  };
+  
+  timers.push(timer);
+  await saveTimers();
+  
+  // Schedule timer
+  extensionAPI.runtime.sendMessage({
+    type: window.MESSAGE_TYPES.SCHEDULE_TIMER,
+    timer: timer
+  });
+  
   updateUI();
 }
 
@@ -642,7 +715,7 @@ async function addTimer() {
   await saveTimers();
   
   // Schedule timer
-  chrome.runtime.sendMessage({
+  extensionAPI.runtime.sendMessage({
     type: window.MESSAGE_TYPES.SCHEDULE_TIMER,
     timer: timer
   });
@@ -661,7 +734,7 @@ async function deleteAlarm(id) {
   alarms = alarms.filter(alarm => alarm.id !== id);
   await saveAlarms();
 
-  chrome.runtime.sendMessage({
+  extensionAPI.runtime.sendMessage({
     type: window.MESSAGE_TYPES.CLEAR_ALARM,
     id: id
   });
@@ -677,7 +750,7 @@ async function deleteTimer(id) {
   timers = timers.filter(timer => timer.id !== id);
   await saveTimers();
 
-  chrome.runtime.sendMessage({
+  extensionAPI.runtime.sendMessage({
     type: window.MESSAGE_TYPES.CLEAR_TIMER,
     id: id
   });
@@ -690,7 +763,7 @@ async function deleteTimer(id) {
  */
 async function saveAlarms() {
   try {
-    await chrome.storage.local.set({ [window.STORAGE_KEYS.ALARMS]: alarms });
+    await extensionAPI.storage.local.set({ [window.STORAGE_KEYS.ALARMS]: alarms });
   } catch (error) {
     console.error('Error saving alarms:', error);
     showError('Failed to save alarm. Please try again.');
@@ -702,7 +775,7 @@ async function saveAlarms() {
  */
 async function saveTimers() {
   try {
-    await chrome.storage.local.set({ [window.STORAGE_KEYS.TIMERS]: timers });
+    await extensionAPI.storage.local.set({ [window.STORAGE_KEYS.TIMERS]: timers });
   } catch (error) {
     console.error('Error saving timers:', error);
     showError('Failed to save timer. Please try again.');
@@ -966,7 +1039,7 @@ async function changeTheme(theme) {
   
   // Save theme to storage
   try {
-    await chrome.storage.local.set({ [window.STORAGE_KEYS.THEME]: theme });
+    await extensionAPI.storage.local.set({ [window.STORAGE_KEYS.THEME]: theme });
   } catch (error) {
     console.error('Error saving theme:', error);
   }
@@ -1010,7 +1083,7 @@ async function changeClockFormat(format) {
   }
   
   try {
-    await chrome.storage.local.set({ [window.STORAGE_KEYS.CLOCK_FORMAT]: format });
+    await extensionAPI.storage.local.set({ [window.STORAGE_KEYS.CLOCK_FORMAT]: format });
   } catch (error) {
     console.error('Error saving clock format:', error);
   }

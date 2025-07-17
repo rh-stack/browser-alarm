@@ -1,3 +1,8 @@
+// Load compatibility layer for Chrome MV3 service worker context
+if (typeof importScripts !== 'undefined') {
+  importScripts('browser-compatibility.js');
+}
+
 const STORAGE_KEYS = {
   ALARMS: 'alarms',
   TIMERS: 'timers'
@@ -42,17 +47,17 @@ function safeEncodeURIComponent(str) {
   return encodeURIComponent(str);
 }
 
-chrome.runtime.onInstalled.addListener(async () => {
+extensionAPI.runtime.onInstalled.addListener(async () => {
   console.log('Extension installed');
   await rehydrateAlarms();
 });
 
-chrome.runtime.onStartup.addListener(async () => {
+extensionAPI.runtime.onStartup.addListener(async () => {
   console.log('Browser started');
   await rehydrateAlarms();
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+extensionAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case MESSAGE_TYPES.SCHEDULE_ALARM:
       scheduleAlarm(message.alarm);
@@ -71,7 +76,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-chrome.alarms.onAlarm.addListener(async (alarm) => {
+extensionAPI.alarms.onAlarm.addListener(async (alarm) => {
   console.log('Alarm fired:', alarm.name);
   
   if (alarm.name.startsWith(NAME_PREFIXES.ALARM)) {
@@ -101,7 +106,7 @@ async function scheduleAlarm(alarm) {
   }
   
   try {
-    await chrome.alarms.create(alarmName, {
+    await extensionAPI.alarms.create(alarmName, {
       when: alarmTime.getTime()
     });
     console.log(`Scheduled alarm ${alarmName} for ${alarmTime}`);
@@ -120,7 +125,7 @@ async function scheduleTimer(timer) {
   const timerName = `${NAME_PREFIXES.TIMER}${timer.id}`;
   
   try {
-    await chrome.alarms.create(timerName, {
+    await extensionAPI.alarms.create(timerName, {
       when: timer.endTime
     });
     console.log(`Scheduled timer ${timerName} for ${new Date(timer.endTime)}`);
@@ -136,7 +141,7 @@ async function scheduleTimer(timer) {
 async function clearAlarm(id) {
   const alarmName = `${NAME_PREFIXES.ALARM}${id}`;
   try {
-    await chrome.alarms.clear(alarmName);
+    await extensionAPI.alarms.clear(alarmName);
     console.log(`Cleared alarm ${alarmName}`);
   } catch (error) {
     console.error('Error clearing alarm:', error);
@@ -150,7 +155,7 @@ async function clearAlarm(id) {
 async function clearTimer(id) {
   const timerName = `${NAME_PREFIXES.TIMER}${id}`;
   try {
-    await chrome.alarms.clear(timerName);
+    await extensionAPI.alarms.clear(timerName);
     console.log(`Cleared timer ${timerName}`);
   } catch (error) {
     console.error('Error clearing timer:', error);
@@ -163,15 +168,15 @@ async function clearTimer(id) {
  */
 async function handleAlarmFired(alarmName) {
   const id = alarmName.replace(NAME_PREFIXES.ALARM, '');
-  const result = await chrome.storage.local.get([STORAGE_KEYS.ALARMS]);
+  const result = await extensionAPI.storage.local.get([STORAGE_KEYS.ALARMS]);
   const alarms = result[STORAGE_KEYS.ALARMS] || [];
   const alarm = alarms.find(a => a.id === id);
   
   if (alarm) {
-    const url = chrome.runtime.getURL(`alarm.html?id=${id}&time=${alarm.time}&label=${safeEncodeURIComponent(alarm.label)}`);
-    await chrome.tabs.create({ url });
+    const url = extensionAPI.runtime.getURL(`alarm.html?id=${id}&time=${alarm.time}&label=${safeEncodeURIComponent(alarm.label)}`);
+    await extensionAPI.tabs.create({ url });
     const updatedAlarms = alarms.filter(a => a.id !== id);
-    await chrome.storage.local.set({ [STORAGE_KEYS.ALARMS]: updatedAlarms });
+    await extensionAPI.storage.local.set({ [STORAGE_KEYS.ALARMS]: updatedAlarms });
   }
 }
 
@@ -181,16 +186,16 @@ async function handleAlarmFired(alarmName) {
  */
 async function handleTimerFired(timerName) {
   const id = timerName.replace(NAME_PREFIXES.TIMER, '');
-  const result = await chrome.storage.local.get([STORAGE_KEYS.TIMERS]);
+  const result = await extensionAPI.storage.local.get([STORAGE_KEYS.TIMERS]);
   const timers = result[STORAGE_KEYS.TIMERS] || [];
   const timer = timers.find(t => t.id === id);
   
   if (timer) {
     const duration = formatDuration(timer.durationMs);
-    const url = chrome.runtime.getURL(`timer.html?id=${id}&duration=${safeEncodeURIComponent(duration)}&label=${safeEncodeURIComponent(timer.label)}`);
-    await chrome.tabs.create({ url });
+    const url = extensionAPI.runtime.getURL(`timer.html?id=${id}&duration=${safeEncodeURIComponent(duration)}&label=${safeEncodeURIComponent(timer.label)}`);
+    await extensionAPI.tabs.create({ url });
     const updatedTimers = timers.filter(t => t.id !== id);
-    await chrome.storage.local.set({ [STORAGE_KEYS.TIMERS]: updatedTimers });
+    await extensionAPI.storage.local.set({ [STORAGE_KEYS.TIMERS]: updatedTimers });
   }
 }
 
@@ -199,7 +204,7 @@ async function handleTimerFired(timerName) {
  */
 async function rehydrateAlarms() {
   try {
-    const result = await chrome.storage.local.get([STORAGE_KEYS.ALARMS, STORAGE_KEYS.TIMERS]);
+    const result = await extensionAPI.storage.local.get([STORAGE_KEYS.ALARMS, STORAGE_KEYS.TIMERS]);
     const alarms = result[STORAGE_KEYS.ALARMS] || [];
     const timers = result[STORAGE_KEYS.TIMERS] || [];
     for (const alarm of alarms) {

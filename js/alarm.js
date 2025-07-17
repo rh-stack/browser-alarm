@@ -1,3 +1,5 @@
+// Browser compatibility layer is loaded via HTML script tag
+
 window.addEventListener('DOMContentLoaded', async () => {
   const { theme, clockFormat } = await loadSettings();
   document.documentElement.setAttribute('data-theme', theme);
@@ -10,7 +12,7 @@ window.addEventListener('DOMContentLoaded', async () => {
  */
 async function loadSettings() {
   try {
-    const result = await chrome.storage.local.get([
+    const result = await extensionAPI.storage.local.get([
       window.STORAGE_KEYS.THEME,
       window.STORAGE_KEYS.CLOCK_FORMAT
     ]);

@@ -586,11 +586,22 @@ body::before {
   cursor: pointer;
   border-radius: 0;
   transition: all 0.2s;
+  box-shadow: 0 0 2px hsl(var(--primary) / 0.3); /* Add glow effect */
 }
 
 .button:hover {
   background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
+  box-shadow: 0 0 4px hsl(var(--primary) / 0.6); /* Enhanced glow on hover */
+}
+
+/* Small buttons for add/pomodoro actions */
+.button.small-button,
+.button.pomodoro-button {
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button-icon {

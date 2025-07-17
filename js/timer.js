@@ -1,5 +1,7 @@
+// Browser compatibility layer is loaded via HTML script tag
+
 window.addEventListener('DOMContentLoaded', async () => {
-  const theme = await loadTheme();
+  const { theme } = await loadSettings();
   document.documentElement.setAttribute('data-theme', theme);
   document.body.classList.add('theme-loaded');
   initializeTimerNotification();
@@ -8,13 +10,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 /**
  * Loads the saved theme from storage
  */
-async function loadTheme() {
+async function loadSettings() {
   try {
-    const result = await chrome.storage.local.get([window.STORAGE_KEYS.THEME]);
-    return result[window.STORAGE_KEYS.THEME] || 'green';
+    const result = await extensionAPI.storage.local.get([window.STORAGE_KEYS.THEME]);
+    return { theme: result[window.STORAGE_KEYS.THEME] || 'green' };
   } catch (error) {
     console.error('Error loading theme:', error);
-    return 'green';
+    return { theme: 'green' };
   }
 }
 
