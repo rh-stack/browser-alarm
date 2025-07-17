@@ -139,7 +139,13 @@ body::before {
     );
   pointer-events: none;
   z-index: 999;
-  animation: scanlines-flicker 0.1s linear infinite;
+}
+
+/* Firefox-optimized scanlines flicker - much less frequent */
+@-moz-document url-prefix() {
+  .terminal-container::before {
+    animation: scanlines-flicker-ff 2s linear infinite;
+  }
 }
 
 @keyframes scanlines-flicker {
@@ -147,6 +153,12 @@ body::before {
   98% { opacity: 1; }
   99% { opacity: 0.98; }
   100% { opacity: 1; }
+}
+
+@keyframes scanlines-flicker-ff {
+  0% { opacity: 1; }
+  99% { opacity: 1; }
+  100% { opacity: 0.98; }
 }
 
 .scan-line {
@@ -176,6 +188,30 @@ body::before {
 @-moz-document url-prefix() {
   .scan-line {
     display: none;
+  }
+  
+  /* Optimize animations for Firefox performance */
+  * {
+    will-change: auto; /* Prevent unnecessary compositing layers */
+  }
+  
+  /* Reduce animation complexity on Firefox */
+  .ascii-content {
+    animation: pulse-simple 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-simple {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+  
+  /* Disable expensive filters on Firefox */
+  .button {
+    box-shadow: none;
+  }
+  
+  .button:hover {
+    box-shadow: none;
   }
 }
 
@@ -411,6 +447,14 @@ body::before {
   }
 }
 
+/* Firefox-optimized spin - simple rotation only */
+@-moz-document url-prefix() {
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
+
 @keyframes progressShimmer {
   0% { 
     background: linear-gradient(90deg, 
@@ -428,6 +472,14 @@ body::before {
     background: linear-gradient(90deg, 
       hsl(var(--primary)) 0%, 
       hsl(var(--primary)) 100%);
+  }
+}
+
+/* Firefox-optimized shimmer - simpler animation */
+@-moz-document url-prefix() {
+  @keyframes progressShimmer {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
   }
 }
 
@@ -453,6 +505,14 @@ body::before {
   }
 }
 
+/* Firefox-optimized glow - no text-shadow */
+@-moz-document url-prefix() {
+  @keyframes messageGlow {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+}
+
 @keyframes countPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
@@ -466,6 +526,14 @@ body::before {
   50% { 
     transform: scale(1.15); 
     text-shadow: 0 0 6px hsl(var(--accent));
+  }
+}
+
+/* Firefox-optimized count pulse - no text-shadow */
+@-moz-document url-prefix() {
+  @keyframes countPulseActive {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
   }
 }
 

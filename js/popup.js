@@ -282,6 +282,17 @@ function handleTimeInputMask(e) {
     const previousValue = e.target.getAttribute('data-prev-value') || '';
     const isDeleting = currentValue.length < previousValue.length;
     
+    if (isDeleting && previousValue.includes(':') && currentValue.includes(':')) {
+      e.target.setAttribute('data-prev-value', currentValue);
+      return;
+    }
+    
+    if (isDeleting && previousValue.includes(':') && !currentValue.includes(':')) {
+      e.target.value = currentValue.replace(/[^\d]/g, '');
+      e.target.setAttribute('data-prev-value', e.target.value);
+      return;
+    }
+    
     let value = currentValue.replace(/[^\d]/g, '');
  
     if (value.length > 4) {
@@ -340,6 +351,11 @@ function handleTimeInputKeydown(e) {
     return;
   }
   
+  // Simple fix: prevent default backspace behavior, let input handler manage it
+  if (e.key === 'Backspace' && clockFormat === '24') {
+    return;
+  }
+  
   if (clockFormat === '12' && (e.key === 'a' || e.key === 'A' || e.key === 'p' || e.key === 'P')) {
     e.preventDefault();
     toggleAmPm(e.target, e.key.toUpperCase());
@@ -366,7 +382,6 @@ function handleTimeInputKeydown(e) {
 function handleTimerInputMask(e) {
   let value = e.target.value.replace(/[^\d]/g, '');
   
-  // Limit to reasonable timer values (999 minutes max)
   if (parseInt(value) > window.UI_CONSTANTS.MAX_TIMER_MINUTES) {
     value = window.UI_CONSTANTS.MAX_TIMER_MINUTES.toString();
   }
@@ -379,7 +394,6 @@ function handleTimerInputMask(e) {
  * @param {KeyboardEvent} e - Keydown event
  */
 function handleTimerInputKeydown(e) {
-  // Handle Enter key to submit timer
   if (e.key === 'Enter') {
     e.preventDefault();
     addTimer();
@@ -409,12 +423,27 @@ function handleTimerInputKeydown(e) {
  * Starts time and UI updates with consistent intervals
  */
 function startTimeUpdates() {
-  updateTime();
-  updateUI();
-  setInterval(() => {
-    updateTime();
-    updateUI();
-  }, window.ANIMATION_INTERVALS.TIME_UPDATE);
+  let lastTimeText = '';
+  let lastUIUpdate = 0;
+  
+  function update() {
+    const currentTimeText = window.formatCurrentTime(clockFormat);
+
+    if (currentTimeText !== lastTimeText) {
+      currentTimeEl.textContent = currentTimeText;
+      lastTimeText = currentTimeText;
+    }
+    
+    const now = Date.now();
+    if (now - lastUIUpdate >= 1000) { // updating UI once a 1 second
+      updateUI();
+      lastUIUpdate = now;
+    }
+  }
+  
+  update();
+  
+  setInterval(update, window.ANIMATION_INTERVALS.TIME_UPDATE);
 }
 
 /**
@@ -431,7 +460,6 @@ function updateUI() {
 }
 
 function updateCounts() {
-  // Count only active timers (not expired ones)
   const activeTimers = timers.filter(timer => timer.endTime > Date.now());
   
   alarmsCountEl.textContent = alarms.length;
@@ -458,7 +486,7 @@ function updateAsciiArt(activeCount) {
     systemStatus.style.color = 'hsl(var(--accent))';
     activeCountEl.classList.add('has-active');
     updateStatusMessage(`${activeCount} active task${activeCount > 1 ? 's' : ''}`);
-    updateProgressBar(Math.min(activeCount / 10, 1)); // Max progress at 10 items
+    updateProgressBar(Math.min(activeCount / 10, 1));
     updateActivityIndicator(true);
   }
 }
@@ -469,12 +497,8 @@ function renderAlarms() {
     return;
   }
   
-  // Sort alarms by closest time first
   const sortedAlarms = [...alarms].sort((a, b) => {
-    // Calculate milliseconds until each alarm
     const now = new Date();
-    
-    // Parse alarm time
     const [hoursA, minutesA] = a.time.split(':').map(Number);
     const [hoursB, minutesB] = b.time.split(':').map(Number);
     
@@ -494,7 +518,6 @@ function renderAlarms() {
   });
   
   alarmsListEl.innerHTML = sortedAlarms.map(alarm => createAlarmHTML(alarm)).join('');
-  // Add delete listeners after rendering
   document.querySelectorAll('.delete-alarm').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = btn.dataset.id;
@@ -504,14 +527,12 @@ function renderAlarms() {
 }
 
 function renderTimers() {
-  // Clean up expired timers first
   const now = Date.now();
   const activeTimers = timers.filter(timer => timer.endTime > now);
-  
-  // Update the timers array if any were removed
+
   if (activeTimers.length !== timers.length) {
     timers = activeTimers;
-    saveTimers(); // Save the cleaned up array
+    saveTimers();
   }
   
   if (activeTimers.length === 0) {
@@ -519,13 +540,12 @@ function renderTimers() {
     return;
   }
   
-  // Sort timers by closest end time first (shortest remaining time)
   const sortedTimers = [...activeTimers].sort((a, b) => {
     return a.endTime - b.endTime;
   });
   
   timersListEl.innerHTML = sortedTimers.map(timer => createTimerHTML(timer)).join('');
-  // Add delete listeners after rendering
+
   document.querySelectorAll('.delete-timer').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = btn.dataset.id;
@@ -537,8 +557,7 @@ function renderTimers() {
 function createAlarmHTML(alarm) {
   const timeLeft = window.getTimeUntilAlarm(alarm.time, true);
   
-  // Format alarm time according to selected clock format
-  let displayTime = alarm.time; // alarm.time is always in 24-hour format
+  let displayTime = alarm.time;
   if (clockFormat === '12') {
     displayTime = window.format24to12Hour(alarm.time);
   }
@@ -606,11 +625,10 @@ function showError(msg) {
  */
 async function addAlarm() {
   const timeInput = newAlarmTimeEl.value;
-  const label = newAlarmLabelEl.value.trim() || 'alarm'; // Default label
+  const label = newAlarmLabelEl.value.trim() || 'alarm';
   
   let time = timeInput;
   
-  // Convert 12-hour format to 24-hour format if needed
   if (clockFormat === '12') {
     time = window.convert12to24Hour(timeInput);
     if (!time) {
@@ -633,20 +651,18 @@ async function addAlarm() {
   
   const alarm = {
     id: window.generateId(),
-    time: time, // Always store in 24-hour format
+    time: time,
     label: label
   };
   
   alarms.push(alarm);
   await saveAlarms();
-  
-  // Schedule alarm
+
   extensionAPI.runtime.sendMessage({
     type: window.MESSAGE_TYPES.SCHEDULE_ALARM,
     alarm: alarm
   });
-  
-  // Reset form
+
   newAlarmTimeEl.value = '';
   newAlarmLabelEl.value = '';
   setDefaultAlarmTime();
@@ -670,8 +686,7 @@ async function startPomodoro() {
   
   timers.push(timer);
   await saveTimers();
-  
-  // Schedule timer
+
   extensionAPI.runtime.sendMessage({
     type: window.MESSAGE_TYPES.SCHEDULE_TIMER,
     timer: timer
@@ -687,7 +702,6 @@ async function addTimer() {
   const minutes = parseInt(newTimerMinutesEl.value) || 0;
   const label = newTimerLabelEl.value.trim() || 'timer'; // Default label
   
-  // Validation
   if (minutes === 0) {
     showError('Please enter duration');
     return;
@@ -714,13 +728,11 @@ async function addTimer() {
   timers.push(timer);
   await saveTimers();
   
-  // Schedule timer
   extensionAPI.runtime.sendMessage({
     type: window.MESSAGE_TYPES.SCHEDULE_TIMER,
     timer: timer
   });
   
-  // Reset form
   newTimerMinutesEl.value = '';
   newTimerLabelEl.value = '';
   updateUI();
@@ -789,43 +801,48 @@ function startSystemIndicatorRotation() {
   const indicators = ['◐', '◑', '◒', '◓'];
   let currentIndex = 0;
   
-  setInterval(() => {
+  // Use requestAnimationFrame for smoother animation
+  function updateIndicator() {
     const indicatorEl = document.getElementById('system-indicator');
     if (indicatorEl) {
       indicatorEl.textContent = indicators[currentIndex];
       currentIndex = (currentIndex + 1) % indicators.length;
     }
-  }, window.ANIMATION_INTERVALS.SYSTEM_INDICATOR);
+  }
+
+  setInterval(updateIndicator, 800);
 }
 
 /**
  * Starts the progress bar shimmer animation
  */
 function startProgressBarAnimation() {
-  const chars = ['▓', '▒', '░'];
-  let shimmerPosition = 0;
+  const shimmerStates = [
+    '████████████████████████████████████████',
+    '███████████████████████████████████████▓',
+    '██████████████████████████████████████▓▓',
+    '█████████████████████████████████████▓▓▓',
+    '████████████████████████████████████▓▓▓▓',
+    '███████████████████████████████████▓▓▓▓▓',
+    '██████████████████████████████████▓▓▓▓▓▓',
+    '█████████████████████████████████▓▓▓▓▓▓▓',
+    '████████████████████████████████▓▓▓▓▓▓▓▓',
+    '███████████████████████████████▓▓▓▓▓▓▓▓▓',
+    '██████████████████████████████▓▓▓▓▓▓▓▓▓▓',
+    '█████████████████████████████▓▓▓▓▓▓▓▓▓▓▓'
+  ];
+  
+  let currentState = 0;
   
   setInterval(() => {
     const progressBar = document.getElementById('progress-bar');
     if (progressBar) {
       const totalChars = window.ASCII_DIMENSIONS.MAIN_PANEL_CHARS;
-      let bar = '';
-      
-      for (let i = 0; i < totalChars; i++) {
-        const distanceFromShimmer = Math.abs(i - shimmerPosition);
-        if (distanceFromShimmer === 0) {
-          bar += '█';
-        } else if (distanceFromShimmer <= 2) {
-          bar += chars[distanceFromShimmer - 1];
-        } else {
-          bar += '▓';
-        }
-      }
-      
-      progressBar.textContent = bar;
-      shimmerPosition = (shimmerPosition + 1) % totalChars;
+      const pattern = shimmerStates[currentState];
+      progressBar.textContent = pattern.substring(0, totalChars);
+      currentState = (currentState + 1) % shimmerStates.length;
     }
-  }, window.ANIMATION_INTERVALS.PROGRESS_BAR);
+  }, 300);
 }
 
 /**
@@ -833,35 +850,35 @@ function startProgressBarAnimation() {
  */
 function startActivityScan() {
   const patterns = [
-    '░░░░░░░░░░░░░░░░░░░░░░░░░░', // 26 chars for main panel
+    '░░░░░░░░░░░░░░░░░░░░░░░░░░',
     '█░░░░░░░░░░░░░░░░░░░░░░░░░',
     '██░░░░░░░░░░░░░░░░░░░░░░░░',
     '███░░░░░░░░░░░░░░░░░░░░░░░',
-    '████░░░░░░░░░░░░░░░░░░░░░░',
-    '░████░░░░░░░░░░░░░░░░░░░░░',
-    '░░████░░░░░░░░░░░░░░░░░░░░',
-    '░░░████░░░░░░░░░░░░░░░░░░░',
-    '░░░░████░░░░░░░░░░░░░░░░░░',
-    '░░░░░████░░░░░░░░░░░░░░░░░',
-    '░░░░░░████░░░░░░░░░░░░░░░░',
-    '░░░░░░░████░░░░░░░░░░░░░░░',
-    '░░░░░░░░████░░░░░░░░░░░░░░',
-    '░░░░░░░░░████░░░░░░░░░░░░░',
-    '░░░░░░░░░░████░░░░░░░░░░░░',
-    '░░░░░░░░░░░████░░░░░░░░░░░',
-    '░░░░░░░░░░░░████░░░░░░░░░░',
-    '░░░░░░░░░░░░░████░░░░░░░░░',
-    '░░░░░░░░░░░░░░████░░░░░░░░',
-    '░░░░░░░░░░░░░░░████░░░░░░░',
-    '░░░░░░░░░░░░░░░░████░░░░░░',
-    '░░░░░░░░░░░░░░░░░████░░░░░',
-    '░░░░░░░░░░░░░░░░░░████░░░░',
-    '░░░░░░░░░░░░░░░░░░░████░░',
-    '░░░░░░░░░░░░░░░░░░░░████',
-    '░░░░░░░░░░░░░░░░░░░░░███',
-    '░░░░░░░░░░░░░░░░░░░░░██',
-    '░░░░░░░░░░░░░░░░░░░░░░█',
-    '░░░░░░░░░░░░░░░░░░░░░░░'
+    '░███░░░░░░░░░░░░░░░░░░░░░░',
+    '░░███░░░░░░░░░░░░░░░░░░░░░',
+    '░░░███░░░░░░░░░░░░░░░░░░░░',
+    '░░░░███░░░░░░░░░░░░░░░░░░░',
+    '░░░░░███░░░░░░░░░░░░░░░░░░',
+    '░░░░░░███░░░░░░░░░░░░░░░░░',
+    '░░░░░░░███░░░░░░░░░░░░░░░░',
+    '░░░░░░░░███░░░░░░░░░░░░░░░',
+    '░░░░░░░░░███░░░░░░░░░░░░░░',
+    '░░░░░░░░░░███░░░░░░░░░░░░░',
+    '░░░░░░░░░░░███░░░░░░░░░░░░',
+    '░░░░░░░░░░░░███░░░░░░░░░░░',
+    '░░░░░░░░░░░░░███░░░░░░░░░░',
+    '░░░░░░░░░░░░░░███░░░░░░░░░',
+    '░░░░░░░░░░░░░░░███░░░░░░░░',
+    '░░░░░░░░░░░░░░░░███░░░░░░░',
+    '░░░░░░░░░░░░░░░░░███░░░░░░',
+    '░░░░░░░░░░░░░░░░░░███░░░░░',
+    '░░░░░░░░░░░░░░░░░░░███░░░░',
+    '░░░░░░░░░░░░░░░░░░░░███░░',
+    '░░░░░░░░░░░░░░░░░░░░░███░',
+    '░░░░░░░░░░░░░░░░░░░░░░███',
+    '░░░░░░░░░░░░░░░░░░░░░░░██',
+    '░░░░░░░░░░░░░░░░░░░░░░░░█',
+    '░░░░░░░░░░░░░░░░░░░░░░░░░'
   ];
   
   let currentPattern = 0;
@@ -872,7 +889,7 @@ function startActivityScan() {
       activityIndicator.textContent = patterns[currentPattern];
       currentPattern = (currentPattern + 1) % patterns.length;
     }
-  }, window.ANIMATION_INTERVALS.ACTIVITY_SCAN);
+  }, 200);
 }
 
 function startSidePanelAnimations() {
@@ -961,7 +978,7 @@ function updateStatusMessage(message) {
 
 /**
  * Updates the progress bar display
- * @param {number} progress - Progress value between 0 and 1
+ * @param {number} progress
  */
 function updateProgressBar(progress) {
   const progressBar = document.getElementById('progress-bar');
@@ -1015,13 +1032,11 @@ function showSettings() {
 function showMain() {
   settingsScreenEl.style.display = 'none';
   mainScreenEl.style.display = 'block';
-  
-  // Update header for main screen
+
   headerPromptEl.textContent = '┌─[alarm@timer]─[~]';
   backBtnEl.style.display = 'none';
   settingsBtnEl.style.display = 'flex';
-  
-  // Hide donate button
+
   const donateButton = document.querySelector('.donate-button');
   if (donateButton) {
     donateButton.style.display = 'none';
@@ -1036,8 +1051,7 @@ async function changeTheme(theme) {
   currentTheme = theme;
   applyTheme(theme);
   updateActiveThemeIndicator();
-  
-  // Save theme to storage
+
   try {
     await extensionAPI.storage.local.set({ [window.STORAGE_KEYS.THEME]: theme });
   } catch (error) {
@@ -1073,9 +1087,9 @@ function updateActiveThemeIndicator() {
 async function changeClockFormat(format) {
   clockFormat = format;
   updateActiveClockFormatIndicator();
-  setDefaultAlarmTime(); // Update default alarm time with new format
-  updateTime(); // Update current time display immediately
-  renderAlarms(); // Re-render alarms to update time format display
+  setDefaultAlarmTime();
+  updateTime();
+  renderAlarms();
   
   const alarmTimeInput = document.getElementById('new-alarm-time');
   if (alarmTimeInput) {
@@ -1124,12 +1138,11 @@ function updateAlarmInputFormat() {
   }
 }
 
-// Matrix Rain Animation
 /**
- * Starts the matrix-style falling characters animation
+ * Starts the matrix-style left-to-right flowing animation
  */
 function startMatrixRainAnimation() {
-  const matrixChars = ['0', '1', '█', '▓', '▒', '░', ' ', '  ', ';', ',', '/', '|', '-', '_', '+', '=', '*', '#', '@', '%', '&'];
+  const matrixChars = ['0', '1', '█', '▓', '▒', '░', ';', '/', '|', '-', '+', '#'];
   const rainElements = [
     document.getElementById('matrix-rain'),
     document.getElementById('matrix-rain-2'),
@@ -1137,27 +1150,32 @@ function startMatrixRainAnimation() {
     document.getElementById('matrix-rain-4')
   ];
   
-  const patterns = rainElements.map(() => generateMatrixPattern());
+  const patternLength = 67;
+  let basePattern = Array(patternLength).fill().map(() => 
+    matrixChars[Math.floor(Math.random() * matrixChars.length)]
+  ).join('');
+  
+  let scrollPosition = 0;
   
   function updateMatrixRain() {
     rainElements.forEach((element, index) => {
       if (element) {
-        patterns[index] = [getRandomMatrixChar()].concat(patterns[index].slice(0, -1));
-        element.textContent = patterns[index].join('');
+        const offset = (patternLength - scrollPosition - index * 15) % patternLength;
+        const flowingPattern = basePattern.slice(offset) + basePattern.slice(0, offset);
+        element.textContent = flowingPattern;
       }
     });
+    
+    scrollPosition = (scrollPosition + 2) % patternLength;
+    
+    if (scrollPosition % 30 === 0) {
+      basePattern = Array(patternLength).fill().map(() => 
+        matrixChars[Math.floor(Math.random() * matrixChars.length)]
+      ).join('');
+    }
   }
   
-  function generateMatrixPattern() {
-    const patternLength = 68;
-    return Array(patternLength).fill().map(() => getRandomMatrixChar());
-  }
-  
-  function getRandomMatrixChar() {
-    return matrixChars[Math.floor(Math.random() * matrixChars.length)];
-  }
-  
-  setInterval(updateMatrixRain, window.ANIMATION_INTERVALS.MATRIX_RAIN);
+  setInterval(updateMatrixRain, 200);
 }
 
 window.deleteAlarm = deleteAlarm;
