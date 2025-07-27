@@ -493,9 +493,14 @@ function updateAsciiArt(activeCount) {
 
 function renderAlarms() {
   if (alarms.length === 0) {
-    alarmsListEl.innerHTML = '<div class="empty-state">No alarms configured</div>';
+    alarmsListEl.textContent = 'No alarms configured';
+    alarmsListEl.className = 'empty-state';
     return;
   }
+  
+  // Clear existing content safely
+  alarmsListEl.innerHTML = '';
+  alarmsListEl.className = '';
   
   const sortedAlarms = [...alarms].sort((a, b) => {
     const now = new Date();
@@ -517,12 +522,10 @@ function renderAlarms() {
     return alarmTimeA - alarmTimeB;
   });
   
-  alarmsListEl.innerHTML = sortedAlarms.map(alarm => createAlarmHTML(alarm)).join('');
-  document.querySelectorAll('.delete-alarm').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = btn.dataset.id;
-      deleteAlarm(id);
-    });
+  // Create elements safely using DOM methods
+  sortedAlarms.forEach(alarm => {
+    const alarmElement = createAlarmElement(alarm);
+    alarmsListEl.appendChild(alarmElement);
   });
 }
 
@@ -536,25 +539,32 @@ function renderTimers() {
   }
   
   if (activeTimers.length === 0) {
-    timersListEl.innerHTML = '<div class="empty-state">No timers running</div>';
+    timersListEl.textContent = 'No timers running';
+    timersListEl.className = 'empty-state';
     return;
   }
+  
+  // Clear existing content safely
+  timersListEl.innerHTML = '';
+  timersListEl.className = '';
   
   const sortedTimers = [...activeTimers].sort((a, b) => {
     return a.endTime - b.endTime;
   });
-  
-  timersListEl.innerHTML = sortedTimers.map(timer => createTimerHTML(timer)).join('');
 
-  document.querySelectorAll('.delete-timer').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = btn.dataset.id;
-      deleteTimer(id);
-    });
+  // Create elements safely using DOM methods
+  sortedTimers.forEach(timer => {
+    const timerElement = createTimerElement(timer);
+    timersListEl.appendChild(timerElement);
   });
 }
 
-function createAlarmHTML(alarm) {
+/**
+ * Creates a safe DOM element for an alarm
+ * @param {object} alarm - Alarm object
+ * @returns {HTMLElement} - Alarm list item element
+ */
+function createAlarmElement(alarm) {
   const timeLeft = window.getTimeUntilAlarm(alarm.time, true);
   
   let displayTime = alarm.time;
@@ -562,42 +572,128 @@ function createAlarmHTML(alarm) {
     displayTime = window.format24to12Hour(alarm.time);
   }
   
-  return `
-    <div class="list-item">
-      <div class="item-content">
-        <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
-          <path d="M22 8c0-2.3-.8-4.3-2-6"/>
-          <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
-          <path d="M4 2C2.8 3.7 2 5.7 2 8"/>
-        </svg>
-        <span class="item-time">${displayTime}</span>
-        <span class="item-label">— ${alarm.label}</span>
-        ${timeLeft ? `<span class="item-label">(${timeLeft})</span>` : ''}
-        ${timeLeft ? `<div class="status-indicator"></div>` : ''}
-      </div>
-      <button class="button-ghost delete-alarm" data-id="${alarm.id}">×</button>
-    </div>
+  // Create container
+  const listItem = document.createElement('div');
+  listItem.className = 'list-item';
+  
+  // Create content container
+  const itemContent = document.createElement('div');
+  itemContent.className = 'item-content';
+  
+  // Create SVG icon
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'section-icon');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.innerHTML = `
+    <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+    <path d="M22 8c0-2.3-.8-4.3-2-6"/>
+    <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
+    <path d="M4 2C2.8 3.7 2 5.7 2 8"/>
   `;
+  
+  // Create time span
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'item-time';
+  timeSpan.textContent = displayTime;
+  
+  // Create label span
+  const labelSpan = document.createElement('span');
+  labelSpan.className = 'item-label';
+  labelSpan.textContent = '— ' + alarm.label;
+  
+  // Append basic elements
+  itemContent.appendChild(svg);
+  itemContent.appendChild(timeSpan);
+  itemContent.appendChild(labelSpan);
+  
+  // Add time left if available
+  if (timeLeft) {
+    const timeLeftSpan = document.createElement('span');
+    timeLeftSpan.className = 'item-label';
+    timeLeftSpan.textContent = '(' + timeLeft + ')';
+    itemContent.appendChild(timeLeftSpan);
+    
+    const statusIndicator = document.createElement('div');
+    statusIndicator.className = 'status-indicator';
+    itemContent.appendChild(statusIndicator);
+  }
+  
+  // Create delete button
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'button-ghost delete-alarm';
+  deleteBtn.setAttribute('data-id', alarm.id);
+  deleteBtn.textContent = '×';
+  deleteBtn.addEventListener('click', () => deleteAlarm(alarm.id));
+  
+  // Assemble final element
+  listItem.appendChild(itemContent);
+  listItem.appendChild(deleteBtn);
+  
+  return listItem;
 }
 
-function createTimerHTML(timer) {
+/**
+ * Creates a safe DOM element for a timer
+ * @param {object} timer - Timer object
+ * @returns {HTMLElement} - Timer list item element
+ */
+function createTimerElement(timer) {
   const remaining = Math.max(0, timer.endTime - Date.now());
   const remainingFormatted = window.formatDuration(remaining, true);
-  return `
-    <div class="list-item">
-      <div class="item-content">
-        <svg class="item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M12 6v6l4 2"/>
-          <circle cx="12" cy="12" r="10"/>
-        </svg>
-        <span class="item-time">${remainingFormatted}</span>
-        <span class="item-label">— ${timer.label}</span>
-        <div class="status-indicator"></div>
-      </div>
-      <button class="button-ghost delete-timer" data-id="${timer.id}">×</button>
-    </div>
+  
+  // Create container
+  const listItem = document.createElement('div');
+  listItem.className = 'list-item';
+  
+  // Create content container
+  const itemContent = document.createElement('div');
+  itemContent.className = 'item-content';
+  
+  // Create SVG icon
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'item-icon');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.innerHTML = `
+    <path d="M12 6v6l4 2"/>
+    <circle cx="12" cy="12" r="10"/>
   `;
+  
+  // Create time span
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'item-time';
+  timeSpan.textContent = remainingFormatted;
+  
+  // Create label span
+  const labelSpan = document.createElement('span');
+  labelSpan.className = 'item-label';
+  labelSpan.textContent = '— ' + timer.label;
+  
+  // Create status indicator
+  const statusIndicator = document.createElement('div');
+  statusIndicator.className = 'status-indicator';
+  
+  // Append elements
+  itemContent.appendChild(svg);
+  itemContent.appendChild(timeSpan);
+  itemContent.appendChild(labelSpan);
+  itemContent.appendChild(statusIndicator);
+  
+  // Create delete button
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'button-ghost delete-timer';
+  deleteBtn.setAttribute('data-id', timer.id);
+  deleteBtn.textContent = '×';
+  deleteBtn.addEventListener('click', () => deleteTimer(timer.id));
+  
+  // Assemble final element
+  listItem.appendChild(itemContent);
+  listItem.appendChild(deleteBtn);
+  
+  return listItem;
 }
 
 

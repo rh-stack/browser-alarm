@@ -117,7 +117,7 @@ ASCII Clock brings the nostalgic charm of terminal computing to your browser wit
 Transform your productivity with the nostalgic power of terminal-style time management. Simple pure retro functionality without bloat.
 
 Keywords:
-alarm, timer, terminal, ASCII, retro, developer, productivity, pomodoro, vintage, monospace
+alarm, timer, clock, terminal, ASCII, retro, developer, productivity, pomodoro, vintage, monospace, synthwave, retrowave, matrix, cyberpunk, cyberdeck, arch, ricing
 
 ### Privacy policy page in Chrome Web Store
 
