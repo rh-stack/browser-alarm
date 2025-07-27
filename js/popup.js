@@ -1,6 +1,6 @@
 // Browser compatibility layer is loaded via HTML script tag
 
-let currentTimeEl, systemUptimeEl, activeCountEl;
+let currentTimeEl, activeCountEl;
 let alarmsCountEl, timersCountEl, alarmsListEl, timersListEl;
 let newAlarmTimeEl, newAlarmLabelEl, addAlarmBtnEl;
 let newTimerMinutesEl, newTimerLabelEl, addTimerBtnEl;
