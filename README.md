@@ -24,26 +24,24 @@ A retro terminal-style browser extension that brings the nostalgic charm of comm
 
 ## 📦 Installation
 
-### Chrome Web Store
-[Chrome -  ASCII Clock - Terminal Style Alarms & Timers](https://chromewebstore.google.com/detail/ascii-clock-terminal-styl/fakagkflpbbglcamkjohjanlcgeabhpa)
+### Links
 
-### Manual Installation (Developer Mode)
+- [Chrome extension](https://chromewebstore.google.com/detail/ascii-clock-terminal-styl/fakagkflpbbglcamkjohjanlcgeabhpa)
+- [Firefox Add-on](https://addons.mozilla.org/en-US/firefox/addon/ascii-clock-alarms-timers/)
+
+### Manual Installation on Chrome (Developer Mode)
 1. Download or clone this repository
 2. Open Chrome and go to `chrome://extensions/`
 3. Enable "Developer mode" in the top right
 4. Click "Load unpacked" and select the project folder
 
-### Firefox Add-ons
-*[Coming Soon - Under Review]*
-
 ## 🛠️ Built With
-
 - **Vanilla JavaScript**
-- **Manifest V3**
 - **CSS3 Animations**
+- **Manifest V3**
 - **Chrome Extension APIs** - Alarms, Storage
 
-## 🧠 AI-Assisted Development
+## 🧠 Section for fellow vibe coders - AI-Assisted Development
 
 This project showcases modern AI-assisted development using structured prompt engineering and context management:
 
